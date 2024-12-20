@@ -1,6 +1,6 @@
 // src/models/Cart.ts
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { IProduct } from './Product';
+import { IProduct } from './product';
 
 interface CartItem {
   product: IProduct['_id'];  // Reference to Product ID
