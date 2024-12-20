@@ -42,7 +42,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <div className="container mx-auto p-6 space-y-8 bg-sky-200 h-[100vh]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Image Section */}
         <div className="space-y-4">
@@ -69,7 +69,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
           </div>
 
           {/* Thumbnail Navigation */}
-          <div className="flex space-x-4 overflow-x-auto">
+          <div className="flex space-x-4 overflow-x-auto bg-sky-100 rounded-md">
             {product.images.map((image, index) => (
               <img
                 key={index}
@@ -126,7 +126,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
       {/* Modal for Full-Size Image */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="relative bg-white p-6 rounded-lg max-w-[90vw] max-h-[90vh]">
+          <div className="relative bg-gray-700 p-6 rounded-lg max-w-[90vw] max-h-[90vh]">
             <button
               onClick={closeModal}
               className="absolute top-2 right-2 text-black text-3xl"
