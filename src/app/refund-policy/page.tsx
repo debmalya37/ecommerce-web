@@ -46,7 +46,7 @@ export default function RefundPolicy() {
       </p>
       <ul className="list-disc ml-6 text-gray-600 space-y-2">
         <li>Refunds will be processed to your original payment method (e.g., bank account, PhonePe wallet) within 7 business days.</li>
-        <li>For payments made via PhonePe, the refund timeline will also depend on PhonePe's policies.</li>
+        <li>For payments made via PhonePe, the refund timeline will also depend on PhonePe&apos;s policies.</li>
       </ul>
 
       <h2 className="text-2xl font-semibold text-gray-800">5. Customer Support</h2>
@@ -67,7 +67,7 @@ export default function RefundPolicy() {
       </p>
       <ul className="list-disc ml-6 text-gray-600 space-y-2">
         <li>Refunds will be processed back to your PhonePe wallet or linked bank account, as applicable.</li>
-        <li>If you face issues, you may contact PhonePe's support team directly or review their{" "}
+        <li>If you face issues, you may contact PhonePe&apos;s support team directly or review their{" "}
           <Link
             href="https://www.phonepe.com/terms-conditions"
             target="_blank"
