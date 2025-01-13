@@ -14,6 +14,7 @@ export default function ProductPage() {
             name={product.name}
             description={product.description}
             price={product.price}
+            originalPrice={product.originalPrice} // Pass original price
             imageUrl={product.images[0]} // Updated to use the first image
           />
         ))}
