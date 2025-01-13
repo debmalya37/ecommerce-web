@@ -9,6 +9,9 @@ export default function Navbar() {
           Detergent Store
         </Link>
         <div>
+          <Link href="/products" className="ml-4 hover:underline">
+            Products
+          </Link>
           <Link href="/cart" className="ml-4 hover:underline">
             Cart
           </Link>
