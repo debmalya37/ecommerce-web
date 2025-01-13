@@ -43,9 +43,14 @@ export default function HomePage() {
                 </div>
                 <h2 className="font-bold text-lg mb-2">{product.name}</h2>
                 <p className="text-gray-600 mb-4">{product.description}</p>
-                <p className="text-blue-500 font-semibold mb-4">
-                  ₹{product.price.toFixed(2)}
-                </p>
+                <div className="mb-4">
+                  <p className="text-red-500 font-semibold text-lg">
+                    ₹{product.price.toFixed(2)}
+                  </p>
+                  <p className="text-gray-500 line-through text-sm">
+                    ₹{product.originalPrice.toFixed(2)}
+                  </p>
+                </div>
                 <Link
                   href={`/product/${product.id}`}
                   className="text-white bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded"
