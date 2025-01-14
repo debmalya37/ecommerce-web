@@ -1,30 +1,71 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
+import sha256 from "crypto-js/sha256";
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
-export async function POST(req: Request) {
-  const { amount, items } = await req.json();
-
-  // Example payload for PhonePe payment API
-  const paymentData = {
-    amount: amount,
-    items: items,
-    currency: 'INR',  // Assuming payment is in INR
-    customerInfo: {
-      email: 'customer@example.com',
-      phone: '9999999999',
-    },
-    callbackUrl: 'https://your-site.com/payment/success', // Callback URL after payment
-    redirectUrl: 'https://your-site.com/payment/failure', // URL on failure
-  };
-
+export async function POST(request: Request) {
   try {
-    // Replace with actual PhonePe API endpoint
-    const response = await axios.post('https://api.phonepe.com/v3/transaction', paymentData);
+    const { amount, userDetails } = await request.json();
+    const transactionid = "Tr-"+uuidv4().toString().slice(-6);
+    // Payload for PhonePe API
+    const payload = {
+      merchantId: process.env.PHONEPE_MERCHANT_ID,
+      merchantTransactionId: `${transactionid}`,
+      merchantUserId: 'MUID-'+uuidv4().toString().slice(-6),
+      amount: Math.round(amount * 100), // Convert to paisa
+      redirectUrl: `http://localhost:3000/api/status/${transactionid}`,
+        redirectMode: "POST",
+        callbackUrl: `http://localhost:3000/api/status/${transactionid}`,
+      mobileNumber: userDetails.phone,
+      paymentInstrument: {
+        type: 'PAY_PAGE',
+      },
+    };
 
-    // Return the payment URL for redirection
-    return NextResponse.json({ paymentUrl: response.data.paymentUrl });
-  } catch (error) {
-    console.error('Payment API error:', error);
-    return NextResponse.json({ error: 'Payment failed' }, { status: 500 });
+    const dataPayload = JSON.stringify(payload);
+      console.log(dataPayload);
+
+      const dataBase64 = Buffer.from(dataPayload).toString("base64");
+      console.log(dataBase64);
+
+      const fullURL =
+        dataBase64 + "/pg/v1/pay" + process.env.PHONEPE_SALT_KEY;
+     const dataSha256 = sha256(fullURL);
+
+      const checksum = dataSha256 + "###" + process.env.PHONEPE_SALT_INDEX;
+      console.log("c====",checksum);
+
+
+
+    const UAT_PAY_API_URL =
+    "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
+
+
+  const response = await axios.post(
+    UAT_PAY_API_URL,
+    {
+      request: dataBase64,
+    },
+    {
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+         "X-VERIFY": checksum,
+      },
+    }
+  );
+
+
+  const redirect=response.data.data.instrumentResponse.redirectInfo.url;
+  console.log(redirect);
+  alert(redirect);
+
+
   }
-}
+
+catch (error:any) {
+     console.error('Payment initiation error:', error.response?.data || error.message);
+      return NextResponse.json({ error: 'Payment initiation failed' }, { status: 500 });
+    }
+  }

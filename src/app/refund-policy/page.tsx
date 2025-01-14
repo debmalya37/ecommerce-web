@@ -49,7 +49,32 @@ export default function RefundPolicy() {
         <li>For payments made via PhonePe, the refund timeline will also depend on PhonePe&apos;s policies.</li>
       </ul>
 
-      <h2 className="text-2xl font-semibold text-gray-800">5. Customer Support</h2>
+      <h2 className="text-2xl font-semibold text-gray-800">5. Refund and Cancellation Policy</h2>
+      <p className="text-gray-600">
+        This refund and cancellation policy outlines how you can cancel or seek a refund for a product or service that you have purchased through the Platform. Under this policy:
+      </p>
+      <ul className="list-disc ml-6 text-gray-600 space-y-2">
+        <li>
+          Cancellations will only be considered if the request is made within 30 days of placing the order. However, cancellation requests may not be entertained if the orders have been communicated to such sellers/merchants listed on the Platform and they have initiated the process of shipping them, or the product is out for delivery. In such an event, you may choose to reject the product at the doorstep.
+        </li>
+        <li>
+          HIURI ENTERPRISES does not accept cancellation requests for perishable items like flowers, eatables, etc. However, the refund or replacement can be made if the user establishes that the quality of the product delivered is not good.
+        </li>
+        <li>
+          In case of receipt of damaged or defective items, please report to our customer service team. The request would be entertained once the seller/merchant listed on the Platform has checked and determined the same at its own end. This should be reported within 30 days of receipt of products.
+        </li>
+        <li>
+          If you feel that the product received is not as shown on the site or as per your expectations, you must bring it to the notice of our customer service within 30 days of receiving the product. The customer service team, after looking into your complaint, will take an appropriate decision.
+        </li>
+        <li>
+          In case of complaints regarding products that come with a warranty from the manufacturers, please refer the issue to them.
+        </li>
+        <li>
+          In case of any refunds approved by HIURI ENTERPRISES, it will take 7 days for the refund to be processed to you.
+        </li>
+      </ul>
+
+      <h2 className="text-2xl font-semibold text-gray-800">6. Customer Support</h2>
       <p className="text-gray-600">
         For any queries regarding refunds, please contact our support team at{" "}
         <a
@@ -59,28 +84,6 @@ export default function RefundPolicy() {
           support@hiuri.com
         </a>
         . Ensure you include your order ID and a brief description of your issue for faster resolution.
-      </p>
-
-      <h2 className="text-2xl font-semibold text-gray-800">6. Payments via PhonePe</h2>
-      <p className="text-gray-600">
-        For refunds related to PhonePe transactions:
-      </p>
-      <ul className="list-disc ml-6 text-gray-600 space-y-2">
-        <li>Refunds will be processed back to your PhonePe wallet or linked bank account, as applicable.</li>
-        <li>If you face issues, you may contact PhonePe&apos;s support team directly or review their{" "}
-          <Link
-            href="https://www.phonepe.com/terms-conditions"
-            target="_blank"
-            className="text-blue-600 hover:underline"
-          >
-            terms and conditions
-          </Link>.
-        </li>
-      </ul>
-
-      <h2 className="text-2xl font-semibold text-gray-800">7. Additional Notes</h2>
-      <p className="text-gray-600">
-        Please note that the refund timeline may vary depending on your payment method and the policies of third-party providers such as PhonePe or your bank. We will do our best to expedite the process and keep you informed at every step.
       </p>
     </div>
   );
