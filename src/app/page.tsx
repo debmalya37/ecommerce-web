@@ -1,26 +1,48 @@
 import Link from "next/link";
 import { products } from "@/data/products";
+import heroImg from "../../public/images/hero.jpg";
+import Image from "next/image";
 
 export default function HomePage() {
   return (
     <div className="bg-blue-50 min-h-screen">
       {/* Hero Section */}
-      <header className="bg-blue-600 text-white py-12">
-        <div className="container mx-auto px-6 text-center">
-          <h1 className="text-4xl font-bold mb-4">
-            Welcome to <span className="text-yellow-300">Hiuri</span>
-          </h1>
-          <p className="text-lg mb-6">
-            Your one-stop shop for high-quality detergents, dishwashers, soaps, and more!
-          </p>
-          <Link
-            href="/products"
-            className="bg-yellow-400 hover:bg-yellow-500 text-blue-800 py-3 px-6 rounded-lg font-semibold shadow-md transition"
-          >
-            Shop Now
-          </Link>
-        </div>
-      </header>
+      <header className="relative bg-blue-600 text-white sm:h-[50vh] md:h-[80vh]"
+>
+  <div className="relative h-full">
+    {/* Background Image */}
+    <Image
+      src={heroImg}
+      alt="Hero Section Background"
+      layout="fill" // Ensures the image fills the container
+      objectFit="cover" // Default for larger screens
+      objectPosition="center" // Default position
+      priority // Optimizes loading for hero image
+      className="absolute inset-0 sm:object-contain md:object-cover " // Responsive styles
+    />
+    {/* Overlay for text readability */}
+    <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+    {/* Content */}
+    <div className="relative container mx-auto px-6 text-center z-10 h-full flex flex-col justify-center items-center">
+      <div className="mt-auto mb-16 md:mb-12 lg:mb-20">
+        <h1 className="text-4xl font-bold mb-4">
+          Welcome to <span className="text-yellow-300">Hiuri</span>
+        </h1>
+        <p className="text-lg mb-6">
+          Your one-stop shop for high-quality detergents, dishwashers, soaps, and more!
+        </p>
+        <Link
+          href="/products"
+          className="bg-yellow-400 hover:bg-yellow-500 text-blue-800 py-3 px-6 rounded-lg font-semibold shadow-md transition"
+        >
+          Shop Now
+        </Link>
+      </div>
+    </div>
+  </div>
+</header>
+
+
 
       {/* Featured Products Section */}
       <section className="bg-white py-12">
