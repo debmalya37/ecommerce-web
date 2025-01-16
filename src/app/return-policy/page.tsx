@@ -39,7 +39,7 @@ export default function ReturnPolicy() {
 
             <h2 className="text-2xl font-semibold text-gray-800">Refunds for Returned Items</h2>
             <p className="text-gray-600">
-                Upon receipt and inspection of the returned item, we will process your refund within 7 business days. Refunds will be issued to the original payment method, including payments made via PhonePe.
+                Upon receipt and inspection of the returned item, we will credit your refund within 7 business days. Refunds will be issued to the original payment method, including payments made via PhonePe.
             </p>
             <p className="text-gray-600">
                 For PhonePe transactions, you can also refer to their <Link href="https://www.phonepe.com/terms-conditions" target="_blank" className="text-blue-600 hover:underline">terms and conditions</Link>.

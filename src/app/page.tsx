@@ -103,10 +103,41 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* About Us Section */}
+      <section className="bg-blue-200 py-12 rounded-md m-3">
+        <div className="container mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">About Us</h2>
+          <p className="text-lg text-gray-700 mb-6">
+            HIURI ENTERPRISES, founded in 2023, is a fast-growing FMCG company dedicated to manufacturing high-quality cleaning products that simplify everyday life. Driven by innovation and a commitment to excellence, our products are designed to deliver superior cleanliness, safety, and satisfaction for households and businesses alike.
+          </p>
+          <p className="text-lg text-gray-700 mb-6">
+            With sustainability at our core, we prioritize eco-friendly practices and carefully select ingredients that are effective yet gentle on the environment. Our mission is to set new standards in cleanliness while contributing to a healthier, greener future.
+          </p>
+        </div>
+      </section>
+
+      {/* Call to Action Section */}
+      <section className="bg-blue-600 text-white py-12">
+        <div className="container mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            Join Thousands of Happy Customers!
+          </h2>
+          <p className="text-lg mb-6">
+            Discover the perfect cleaning solutions for your home at Hiuri.
+          </p>
+          <Link
+            href="/products"
+            className="bg-yellow-400 hover:bg-yellow-500 text-blue-800 py-3 px-6 rounded-lg font-semibold shadow-md transition"
+          >
+            Start Shopping
+          </Link>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-blue-700 text-white py-6">
         <div className="container mx-auto px-6 text-center">
-          <p>&copy; 2025 Hiuri. All rights reserved.</p>
+          <p>&copy; 2025 HIURI ENTERPRISES . All rights reserved.</p>
           <Link
             href="/terms-and-conditions"
             className="text-yellow-300 hover:underline mx-2"
@@ -118,6 +149,18 @@ export default function HomePage() {
             className="text-yellow-300 hover:underline mx-2"
           >
             Privacy Policy
+          </Link>
+          <Link
+            href="/shipping-policy"
+            className="text-yellow-300 hover:underline mx-2"
+          >
+            Shipping Policy
+          </Link>
+          <Link
+            href="/refund-policy"
+            className="text-yellow-300 hover:underline mx-2"
+          >
+            refund Policy
           </Link>
         </div>
       </footer>
