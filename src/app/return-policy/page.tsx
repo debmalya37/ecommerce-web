@@ -1,48 +1,28 @@
-import Link from "next/link";
-
 export default function ReturnPolicy() {
     return (
         <div className="container mx-auto p-6 space-y-6">
             <h1 className="text-3xl font-bold text-gray-800">Return Policy</h1>
             <p className="text-gray-600 leading-7">
-                We at Hiuri aim to ensure a seamless shopping experience. If you wish to return a product, please follow the guidelines below.
-            </p>
-
-            <h2 className="text-2xl font-semibold text-gray-800">Return Policy</h2>
-            <p className="text-gray-600">
-            We offer refund / exchange within first 7 days from the date of your purchase. If 7 days have passed since your purchase, you will not be offered a return, exchange or refund of any kind. 
+                We have a 30-day return policy, which means you have 30 days after receiving your item to request a return.
             </p>
             <p className="text-gray-600">
-                In order to become eligible for a return or an exchange:
-            </p>
-            <ul className="list-disc ml-6 text-gray-600 space-y-2">
-                <li>The purchased item should be unused and in the same condition as you received it.</li>
-                <li>The item must have original packaging.</li>
-                <li>If the item that you purchased was on sale, it may not be eligible for a return/exchange.</li>
-            </ul>
-            <p className="text-gray-600">
-                Further, only such items are replaced by us (based on an exchange request) if such items are found defective or damaged.
-            </p>
-
-            <h2 className="text-2xl font-semibold text-gray-800">Exempted Items</h2>
-            <p className="text-gray-600">
-                You agree that there may be a certain category of products/items that are exempted from returns or refunds. Such categories of products would be identified to you at the time of purchase.
-            </p>
-
-            <h2 className="text-2xl font-semibold text-gray-800">Return Process</h2>
-            <p className="text-gray-600">
-                For exchange/return accepted request(s) (as applicable), once your returned product/item is received and inspected by us, we will send you an email to notify you about the receipt of the returned/exchanged product. Further, if the same has been approved after the quality check at our end, your request (i.e., return/exchange) will be processed in accordance with our policies.
+                To be eligible for a return, your item must be in the same condition that you received it, unworn or unused, with tags, and in its original packaging. You’ll also need the receipt or proof of purchase.
             </p>
             <p className="text-gray-600">
-                To initiate a return, contact us at <a href="mailto:chahalh4@gmail.com" className="text-blue-600 hover:underline">chahalh4@gmail.com</a>. Once your return request is approved, we will provide instructions for shipping the product back to us.
-            </p>
-
-            <h2 className="text-2xl font-semibold text-gray-800">Refunds for Returned Items</h2>
-            <p className="text-gray-600">
-                Upon receipt and inspection of the returned item, we will credit your refund within 7 business days. Refunds will be issued to the original payment method, including payments made via PhonePe.
+                To start a return, you can contact us at{" "}
+                <a href="mailto:chahalh4@gmail.com" className="text-blue-600 hover:underline">
+                    chahalh4@gmail.com
+                </a>.
             </p>
             <p className="text-gray-600">
-                For PhonePe transactions, you can also refer to their <Link href="https://www.phonepe.com/terms-conditions" target="_blank" className="text-blue-600 hover:underline">terms and conditions</Link>.
+                If your return is accepted, we’ll send you a return shipping label, as well as instructions on how and where to send your package. Items sent back to us without first requesting a return will not be accepted.
+            </p>
+            <h2 className="text-2xl font-semibold text-gray-800">Customer Support</h2>
+            <p className="text-gray-600">
+                You can always contact us for any return questions at{" "}
+                <a href="mailto:chahalh4@gmail.com" className="text-blue-600 hover:underline">
+                    chahalh4@gmail.com
+                </a>.
             </p>
         </div>
     );

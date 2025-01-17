@@ -7,7 +7,15 @@ export default function RefundPolicy() {
       <p className="text-gray-600 leading-7">
         At <strong>Hiuri</strong>, we prioritize customer satisfaction. If you are not completely satisfied with your purchase, we are here to help. This refund policy is designed to comply with the guidelines issued by the Reserve Bank of India (RBI) and ensure transparency in our refund process.
       </p>
-
+            <p className="text-gray-600 leading-7">
+                We will notify you once we’ve received and inspected your return, and let you know if the refund was approved or not. If approved, you’ll be automatically refunded on your original payment method within 10 business days and credited in 4 to 5 days. Please remember it can take some time for your bank or credit card company to process and post the refund too.
+            </p>
+            <p className="text-gray-600">
+                If more than 15 business days have passed since we’ve approved your return, please contact us at{" "}
+                <a href="mailto:chahalh4@gmail.com" className="text-blue-600 hover:underline">
+                    chahalh4@gmail.com
+                </a>.
+            </p>
       <h2 className="text-2xl font-semibold text-gray-800">1. Compliance with RBI Guidelines</h2>
       <p className="text-gray-600">
         In adherence to RBI regulations, we ensure:
