@@ -18,7 +18,7 @@
 
 body {
   color: rgb(var(--foreground-rgb)); /* Default text color */
-  background-color: rgb(var(--background-start-rgb)); /* Default background color */
+  /* Default background color */
   background-image: linear-gradient(
     to bottom,
     transparent,

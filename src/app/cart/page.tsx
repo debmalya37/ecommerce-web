@@ -19,24 +19,48 @@ export default function CartPage() {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold">Shopping Cart</h2>
-      {cart.length === 0 ? (
-        <p>Your cart is empty</p>
-      ) : (
-        cart.map((item) => (
-          <div key={item.id} className="border-b py-2">
-            <p>{item.name} - ₹{item.price} x {item.quantity}</p>
-            <button onClick={() => removeFromCart(item.id)} className="text-red-500">
-              Remove
-            </button>
+    <div className="min-h-screen bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 p-6 text-white">
+      <div className="max-w-3xl mx-auto bg-white text-gray-800 rounded-lg shadow-lg p-6">
+        <h2 className="text-3xl font-bold text-center mb-6 text-teal-700">
+          Shopping Cart
+        </h2>
+        {cart.length === 0 ? (
+          <p className="text-center text-gray-500">Your cart is empty</p>
+        ) : (
+          <div className="space-y-4">
+            {cart.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between bg-gray-100 p-4 rounded-md shadow-sm"
+              >
+                <div>
+                  <p className="font-semibold">{item.name}</p>
+                  <p className="text-sm text-gray-600">
+                    ₹{item.price} x {item.quantity}
+                  </p>
+                </div>
+                <button
+                  onClick={() => removeFromCart(item.id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
           </div>
-        ))
-      )}
-      <p className="font-bold">Total: ₹{total.toFixed(2)}</p>
-      <button onClick={handleCheckout} className="bg-green-500 text-white py-2 px-4 mt-4">
-        Checkout
-      </button>
+        )}
+        <div className="mt-6">
+          <p className="text-lg font-bold text-center text-gray-800">
+            Total: ₹{total.toFixed(2)}
+          </p>
+          <button
+            onClick={handleCheckout}
+            className="bg-gradient-to-r from-green-400 to-teal-500 hover:from-green-500 hover:to-teal-600 text-white py-3 px-6 rounded-lg font-semibold w-full mt-6 shadow-md transform hover:scale-105 transition duration-300"
+          >
+            Checkout
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

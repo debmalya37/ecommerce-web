@@ -47,19 +47,32 @@ export default function PaymentPage() {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold">Confirm Your Payment</h2>
-      <p><strong>Full Name:</strong> {userDetails?.fullName}</p>
-      <p><strong>Email:</strong> {userDetails?.email}</p>
-      <p><strong>Phone:</strong> {userDetails?.phone}</p>
-      <p className="mt-4 text-xl"><strong>Total:</strong> ₹{totalAmount}</p>
-
-      <button
-        onClick={handlePayment}
-        className="bg-blue-600 text-white py-2 px-4 w-full mt-6 rounded-md"
-      >
-        Proceed to Payment
-      </button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">
+      <div className="w-full max-w-md bg-white text-gray-800 rounded-lg shadow-lg p-6">
+        <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">
+          Confirm Your Payment
+        </h2>
+        <div className="space-y-4">
+          <p>
+            <strong>Full Name:</strong> {userDetails?.fullName}
+          </p>
+          <p>
+            <strong>Email:</strong> {userDetails?.email}
+          </p>
+          <p>
+            <strong>Phone:</strong> {userDetails?.phone}
+          </p>
+          <p className="text-2xl font-bold text-purple-700 text-center">
+            Total: ₹{totalAmount}
+          </p>
+        </div>
+        <button
+          onClick={handlePayment}
+          className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white py-3 px-6 rounded-lg font-semibold w-full mt-6 shadow-md transform hover:scale-105 transition duration-300"
+        >
+          Proceed to Payment
+        </button>
+      </div>
     </div>
   );
 }
