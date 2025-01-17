@@ -9,11 +9,12 @@ export default function CartPage() {
 
   // Handle checkout and pass the cart details to the payment page
   const handleCheckout = async () => {
-    // Store cart and total amount in the local storage or session storage
+    // Store cart and total amount in session storage
     sessionStorage.setItem('cart', JSON.stringify(cart));
+    sessionStorage.setItem('source', 'cart'); // Mark source as cart
     sessionStorage.setItem('total', total.toString());
 
-    // Redirect to the payment page
+    // Redirect to the billing details page
     router.push('/userBillingDetails');
   };
 

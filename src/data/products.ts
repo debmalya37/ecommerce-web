@@ -2,7 +2,7 @@
 export const products = [
   {
     id: '1',
-    name: 'Ultra Clean Detergent Powder | डिरोक्स एक्टिव, डिटर्जेंट पाउडर',
+    name: ' DeroX | डिरोक्स एक्टिव, डिटर्जेंट पाउडर',
     description: 'A powerful detergent powder for tough stains and bright clothes.',
     price: 110, // Discounted price
     originalPrice: 118, // Original price
@@ -14,7 +14,7 @@ export const products = [
   },
   {
     id: '2',
-    name: 'Fresh Breeze Liquid Detergent |  जिम शाइन, लिक्विड डिशवाश',
+    name: 'Dish Washer |  जिम शाइन, लिक्विड डिशवाश',
     description: 'Liquid detergent with a fresh fragrance for all types of clothes.',
     price: 65,
     originalPrice: 74,

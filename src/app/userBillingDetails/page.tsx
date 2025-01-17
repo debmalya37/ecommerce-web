@@ -18,13 +18,15 @@ export default function UserBillingDetailsPage() {
   const router = useRouter();
 
   const handleSubmit = () => {
-    // Validate fields
     if (!fullName || !email || !phone || !address || !pincode || !state) {
       alert('Please fill in all fields');
       return;
     }
-
-    // Save data to sessionStorage
+  
+    // Retrieve product details from sessionStorage
+    const selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct') || '{}');
+  
+    // Save billing and product details to sessionStorage
     sessionStorage.setItem('userDetails', JSON.stringify({
       fullName,
       email,
@@ -32,12 +34,14 @@ export default function UserBillingDetailsPage() {
       address,
       pincode,
       state,
-      country: 'India'
+      country: 'India',
+      product: selectedProduct,
     }));
-
+  
     // Redirect to payment page
     router.push('/payment');
   };
+  
 
   return (
     <div className="container mx-auto p-6 space-y-8 max-w-lg">

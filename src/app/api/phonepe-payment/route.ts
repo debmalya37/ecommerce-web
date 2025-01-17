@@ -1,71 +1,73 @@
-import { NextResponse } from 'next/server';
-import crypto from 'crypto';
-import sha256 from "crypto-js/sha256";
-import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
+import axios from "axios";
+import crypto from "crypto";
+import { NextResponse } from "next/server";
+import { v4 as uuidv4 } from "uuid";
+
+let salt_key = "96434309-7796-489d-8924-ab56988a6076";
+let merchant_id = "PGTESTPAYUAT86";
 
 export async function POST(request: Request) {
   try {
-    const { amount, userDetails } = await request.json();
-    const transactionid = "Tr-"+uuidv4().toString().slice(-6);
-    // Payload for PhonePe API
-    const payload = {
-      merchantId: process.env.PHONEPE_MERCHANT_ID,
-      merchantTransactionId: `${transactionid}`,
-      merchantUserId: 'MUID-'+uuidv4().toString().slice(-6),
+    const { amount, userDetails } = await request.json(); // Retaining the current userDetails logic
+    const transactionId = "Tr-" + uuidv4().toString().slice(-6);
+
+    // Prepare data payload for PhonePe API
+    const data = {
+      merchantId: merchant_id,
+      merchantTransactionId: transactionId,
+      name: userDetails.name, // Use userDetails for name
       amount: Math.round(amount * 100), // Convert to paisa
-      redirectUrl: `http://localhost:3000/api/status/${transactionid}`,
-        redirectMode: "POST",
-        callbackUrl: `http://localhost:3000/api/status/${transactionid}`,
-      mobileNumber: userDetails.phone,
+      redirectUrl: `http://localhost:3000/api/status?id=${transactionId}`,
+      redirectMode: "POST",
+      callbackUrl: `http://localhost:3000/api/status?id=${transactionId}`,
+      mobileNumber: userDetails.phone, // Use userDetails for phone
       paymentInstrument: {
-        type: 'PAY_PAGE',
+        type: "PAY_PAGE",
       },
     };
 
-    const dataPayload = JSON.stringify(payload);
-      console.log(dataPayload);
+    const payload = JSON.stringify(data);
+    const payloadMain = Buffer.from(payload).toString("base64");
+    const keyIndex = 1;
+    const string = payloadMain + "/pg/v1/pay" + salt_key;
+    const sha256 = crypto.createHash("sha256").update(string).digest("hex");
+    const checksum = sha256 + "###" + keyIndex;
 
-      const dataBase64 = Buffer.from(dataPayload).toString("base64");
-      console.log(dataBase64);
+    const prod_URL =
+      "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
 
-      const fullURL =
-        dataBase64 + "/pg/v1/pay" + process.env.PHONEPE_SALT_KEY;
-     const dataSha256 = sha256(fullURL);
-
-      const checksum = dataSha256 + "###" + process.env.PHONEPE_SALT_INDEX;
-      console.log("c====",checksum);
-
-
-
-    const UAT_PAY_API_URL =
-    "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
-
-
-  const response = await axios.post(
-    UAT_PAY_API_URL,
-    {
-      request: dataBase64,
-    },
-    {
+    const options = {
+      method: "POST",
+      url: prod_URL,
       headers: {
         accept: "application/json",
         "Content-Type": "application/json",
-         "X-VERIFY": checksum,
+        "X-VERIFY": checksum,
       },
-    }
-  );
+      data: {
+        request: payloadMain,
+      },
+    };
 
+    // Await axios response
+    const response = await axios(options);
 
-  const redirect=response.data.data.instrumentResponse.redirectInfo.url;
+    // Log and return the response data
+    console.log(response.data);
+
+    const redirect=response.data.data.instrumentResponse.redirectInfo.url;
   console.log(redirect);
-  alert(redirect);
+  return NextResponse.json({ redirect }); // Return response as JSON
 
 
+    
+  } catch (error: any) {
+    console.error("Payment initiation error:", error.response?.data || error.message);
+
+    // Return error response
+    return NextResponse.json(
+      { error: "Payment initiation failed", details: error.message },
+      { status: 500 }
+    );
   }
-
-catch (error:any) {
-     console.error('Payment initiation error:', error.response?.data || error.message);
-      return NextResponse.json({ error: 'Payment initiation failed' }, { status: 500 });
-    }
-  }
+}

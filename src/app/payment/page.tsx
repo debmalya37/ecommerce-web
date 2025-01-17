@@ -7,12 +7,26 @@ export default function PaymentPage() {
   const [totalAmount, setTotalAmount] = useState(0);
 
   useEffect(() => {
-    // Retrieve user details and total amount from sessionStorage
+    // Retrieve user details and source from session storage
     const user = JSON.parse(sessionStorage.getItem('userDetails') || '{}');
-    const total = parseFloat(sessionStorage.getItem('total') || '0');
+    const source = sessionStorage.getItem('source');
 
     setUserDetails(user);
-    setTotalAmount(total);
+
+    if (source === 'cart') {
+      // Compute total from cart
+      const cart = JSON.parse(sessionStorage.getItem('cart') || '[]');
+      const total = cart.reduce(
+        (sum: number, item: any) => sum + item.price * item.quantity,
+        0
+      );
+      setTotalAmount(total);
+    } else if (source === 'buy-now') {
+      // Compute total from selected product
+      const product = JSON.parse(sessionStorage.getItem('selectedProduct') || '{}');
+      const total = product.price * product.quantity || 0;
+      setTotalAmount(total);
+    }
   }, []);
 
   const handlePayment = async () => {
@@ -21,29 +35,28 @@ export default function PaymentPage() {
         amount: totalAmount,
         userDetails,
       });
-  
-      if (response.data.paymentUrl) {
-        window.location.href = response.data.paymentUrl; // Redirect to PhonePe payment page
+
+      if (response.data.redirect) {
+        window.location.href = response.data.redirect;
       } else {
-        console.error('Payment URL not returned');
+        console.error('Redirect URL not returned');
       }
     } catch (error) {
       console.error('Payment initiation failed:', error);
     }
   };
-  
 
   return (
     <div className="p-6">
       <h2 className="text-2xl font-semibold">Confirm Your Payment</h2>
-      <p className="mt-4"><strong>Full Name:</strong> {userDetails?.fullName}</p>
+      <p><strong>Full Name:</strong> {userDetails?.fullName}</p>
       <p><strong>Email:</strong> {userDetails?.email}</p>
       <p><strong>Phone:</strong> {userDetails?.phone}</p>
       <p className="mt-4 text-xl"><strong>Total:</strong> ₹{totalAmount}</p>
 
       <button
         onClick={handlePayment}
-        className="bg-blue-600 text-white py-2 px-4 w-full mt-6 rounded-md hover:bg-blue-700"
+        className="bg-blue-600 text-white py-2 px-4 w-full mt-6 rounded-md"
       >
         Proceed to Payment
       </button>

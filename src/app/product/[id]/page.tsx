@@ -15,6 +15,23 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
 
   if (!product) return <p>Product not found</p>;
 
+  const handleAddToCart = () => {
+    addToCart({ ...product, quantity });
+    router.push('/cart'); // Redirect to cart page
+  };
+
+  const handleBuyNow = () => {
+    // Store selected product details and mark source as buy-now
+    sessionStorage.setItem(
+      'selectedProduct',
+      JSON.stringify({ ...product, quantity })
+    );
+    sessionStorage.setItem('source', 'buy-now');
+    router.push('/userBillingDetails'); // Redirect to billing details page
+  };
+
+  if (!product) return <p>Product not found</p>;
+
   const handleNextImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex + 1) % product.images.length);
   };
@@ -23,15 +40,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     setCurrentImageIndex((prevIndex) => (prevIndex - 1 + product.images.length) % product.images.length);
   };
 
-  const handleAddToCart = () => {
-    addToCart({ ...product, quantity });
-    router.push('/cart'); // Redirect to cart page
-  };
-
-  const handleBuyNow = () => {
-    addToCart({ ...product, quantity });
-    router.push('/checkout'); // Redirect to checkout page
-  };
+  
 
   const openModal = () => {
     setIsModalOpen(true); // Open modal
