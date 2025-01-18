@@ -75,7 +75,7 @@ export default function TermsAndConditions() {
 
       <h2 className="text-2xl font-semibold text-gray-800">11. Governing Law</h2>
       <p className="text-gray-600">
-        These terms and conditions are governed by the laws of India. Any disputes will be subject to the exclusive jurisdiction of the courts in [Your City].
+        These terms and conditions are governed by the laws of India. Any disputes will be subject to the exclusive jurisdiction of the courts in Meerut.
       </p>
 
       <h2 className="text-2xl font-semibold text-gray-800">12. Contact Us</h2>
