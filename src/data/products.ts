@@ -8,7 +8,6 @@ export const products = [
     originalPrice: 118, // Original price
     images: [
       '/images/detergent-powder.jpg',
-      '/images/liquid-detergent1.jpg',
       '/images/detergent-powder.jpg',
     ], 
   },
