@@ -50,6 +50,14 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     setIsModalOpen(false); // Close modal
   };
 
+  const incrementQuantity = () => {
+    setQuantity((prevQuantity) => prevQuantity + 1);
+  };
+
+  const decrementQuantity = () => {
+    setQuantity((prevQuantity) => Math.max(1, prevQuantity - 1));
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-8 bg-sky-200 h-[100vh]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -100,18 +108,26 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
           <p className="text-2xl font-bold text-gray-900">₹{product.price}</p>
 
           {/* Quantity Selector */}
+          {/* Quantity Selector */}
           <div className="flex items-center space-x-4">
             <label htmlFor="quantity" className="text-lg text-gray-700">
               Quantity:
             </label>
-            <input
-              type="number"
-              id="quantity"
-              value={quantity}
-              min="1"
-              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))}
-              className="border p-2 w-20 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={decrementQuantity}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+              >
+                -
+              </button>
+              <span className="text-lg font-semibold">{quantity}</span>
+              <button
+                onClick={incrementQuantity}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-900"
+              >
+                +
+              </button>
+            </div>
           </div>
 
           {/* Action Buttons */}

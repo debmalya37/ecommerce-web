@@ -3,8 +3,8 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
-let salt_key = "96434309-7796-489d-8924-ab56988a6076";
-let merchant_id = "PGTESTPAYUAT86";
+let salt_key = "b0bec23c-6a29-4ae3-9e70-a1f5a18da8c6";
+let merchant_id = "M22KXVB5MOYOV";
 
 export async function POST(request: Request) {
   try {
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     const checksum = sha256 + "###" + keyIndex;
 
     const prod_URL =
-      "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
+      "https://api.phonepe.com/apis/hermes/pg/v1/pay";
 
     const options = {
       method: "POST",
