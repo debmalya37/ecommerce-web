@@ -39,17 +39,35 @@ export async function POST(req:Request) {
     const response = await axios(options);
 
     if (response.data.success === true) {
-      // Call sendPaymentEmail if the payment is successful
-      const userDetails = {
-        name: data.get("name"),
-        phone: data.get("phone"),
-        email: data.get("email"),
+      // Retrieve details from session storage
+      const userDetails = JSON.parse(sessionStorage.getItem("userDetails") || "{}");
+      const source = sessionStorage.getItem("source");
+
+      let products = [];
+      let totalAmount = 0;
+
+      if (source === "cart") {
+        products = JSON.parse(sessionStorage.getItem("cart") || "[]");
+        totalAmount = products.reduce(
+          (sum: number, item: any) => sum + item.price * item.quantity,
+          0
+        );
+      } else if (source === "buy-now") {
+        const product = JSON.parse(sessionStorage.getItem("selectedProduct") || "{}");
+        products = [product];
+        totalAmount = product.price * product.quantity || 0;
+      }
+
+      // Prepare email details
+      const emailDetails = {
+        userDetails,
+        transactionId,
+        products,
+        totalAmount,
       };
-      const productDetails = {
-        productName: data.get("productName"),
-        productPrice: data.get("productPrice"),
-      };
-      await sendPaymentEmail(userDetails, transactionId, productDetails);
+
+      // Send email
+      await sendPaymentEmail(emailDetails);
 
       return NextResponse.redirect("https://hiuri.in/success", {
         status: 301,

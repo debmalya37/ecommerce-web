@@ -1,93 +1,179 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { jsPDF } from 'jspdf';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import jsPDF from "jspdf";
 
+export default function SuccessPage() {
+  const [userDetails, setUserDetails] = useState<any>(null);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [products, setProducts] = useState<any[]>([]);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
 
-const SuccessPage = () => {
-  const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    // Retrieve payment details from session storage or any other source
-    const paymentData = JSON.parse(sessionStorage.getItem('paymentDetails') || '{}');
-    setPaymentDetails(paymentData);
+    // Retrieve user details and source from session storage
+    const user = JSON.parse(sessionStorage.getItem("userDetails") || "{}");
+    const source = sessionStorage.getItem("source");
+
+    setUserDetails(user);
+
+    if (source === "cart") {
+      // Compute total from cart and fetch cart products
+      const cart = JSON.parse(sessionStorage.getItem("cart") || "[]");
+      const total = cart.reduce(
+        (sum: number, item: any) => sum + item.price * item.quantity,
+        0
+      );
+      setTotalAmount(total);
+      setProducts(cart); // Set products from cart
+    } else if (source === "buy-now") {
+      // Compute total from selected product and fetch product details
+      const product = JSON.parse(sessionStorage.getItem("selectedProduct") || "{}");
+      const total = product.price * product.quantity || 0;
+      setTotalAmount(total);
+      setProducts([product]); // Only the selected product
+    }
+
+    // Simulate successful payment processing
+    setPaymentStatus("Payment Successful!");
   }, []);
 
-  const generateInvoice = () => {
+  const handleDownloadInvoice = () => {
     const doc = new jsPDF();
 
-    // Invoice Header
-    doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
-    doc.text('Invoice', 14, 22);
+    doc.text("Invoice", 14, 20);
+
     doc.setFontSize(12);
-    doc.text('Hiuri Enterprises', 14, 30);
-    doc.text('Date: ' + new Date().toLocaleDateString(), 14, 38);
-    doc.text('Transaction ID: ' + paymentDetails.transactionId, 14, 46);
+    doc.text(`Full Name: ${userDetails?.fullName}`, 14, 30);
+    doc.text(`Email: ${userDetails?.email}`, 14, 40);
+    doc.text(`Phone: ${userDetails?.phone}`, 14, 50);
 
-    // User Details
-    doc.setFont('helvetica', 'normal');
-    doc.text('Name: ' + paymentDetails.userDetails?.fullName, 14, 54);
-    doc.text('Email: ' + paymentDetails.userDetails?.email, 14, 62);
-    doc.text('Phone: ' + paymentDetails.userDetails?.phone, 14, 70);
+    let yPosition = 60;
+    doc.text("Purchased Items:", 14, yPosition);
+    yPosition += 10;
 
-    // Product Details
-    doc.text('Product Name: ' + paymentDetails.productDetails?.productName, 14, 78);
-    doc.text('Price: ₹' + paymentDetails.productDetails?.productPrice, 14, 86);
-    doc.text('Amount Paid: ₹' + paymentDetails.amountPaid, 14, 94);
+    products.forEach((product: any, index: number) => {
+      doc.text(
+        `${product.name} - ₹${product.price} x ${product.quantity} = ₹${product.price * product.quantity}`,
+        14,
+        yPosition
+      );
+      yPosition += 10;
+    });
 
-    // Save PDF
-    doc.save('invoice.pdf');
+    doc.text(`Total: ₹${totalAmount}`, 14, yPosition + 10);
+
+    doc.save("invoice.pdf"); // Save as PDF
   };
 
-  const printInvoice = () => {
+  const handlePrintInvoice = () => {
     const doc = new jsPDF();
-    doc.setFont('helvetica', 'bold');
+  
     doc.setFontSize(18);
-    doc.text('Invoice', 14, 22);
+    doc.text("Invoice", 14, 20);
+  
     doc.setFontSize(12);
-    doc.text('Hiuri Enterprises', 14, 30);
-    doc.text('Date: ' + new Date().toLocaleDateString(), 14, 38);
-    doc.text('Transaction ID: ' + paymentDetails.transactionId, 14, 46);
-
-    doc.setFont('helvetica', 'normal');
-    doc.text('Name: ' + paymentDetails.userDetails?.fullName, 14, 54);
-    doc.text('Email: ' + paymentDetails.userDetails?.email, 14, 62);
-    doc.text('Phone: ' + paymentDetails.userDetails?.phone, 14, 70);
-    doc.text('Product Name: ' + paymentDetails.productDetails?.productName, 14, 78);
-    doc.text('Price: ₹' + paymentDetails.productDetails?.productPrice, 14, 86);
-    doc.text('Amount Paid: ₹' + paymentDetails.amountPaid, 14, 94);
-
-    doc.autoPrint();
-    window.open(doc.output('bloburl'), '_blank');
+  
+    let yPosition = 30; // Start from a higher yPosition
+  
+    // Display user details on separate lines
+    doc.text(`Full Name: ${userDetails?.fullName}`, 14, yPosition);
+    yPosition += 10; // Move to the next line
+    doc.text(`Email: ${userDetails?.email}`, 14, yPosition);
+    yPosition += 10;
+    doc.text(`Phone: ${userDetails?.phone}`, 14, yPosition);
+    yPosition += 10;
+    doc.text(`Address: ${userDetails?.address}`, 14, yPosition);
+    yPosition += 10;
+    doc.text(`Pincode: ${userDetails?.pincode}`, 14, yPosition);
+    yPosition += 10;
+    doc.text(`State: ${userDetails?.state}`, 14, yPosition);
+    yPosition += 10;
+  
+    // Display purchased items
+    doc.text("Purchased Items:", 14, yPosition);
+    yPosition += 10;
+  
+    products.forEach((product: any, index: number) => {
+      doc.text(
+        `${product.name} - ₹${product.price} x ${product.quantity} = ₹${product.price * product.quantity}`,
+        14,
+        yPosition
+      );
+      yPosition += 10;
+    });
+  
+    doc.text(`Total: ₹${totalAmount}`, 14, yPosition + 10);
+  
+    doc.autoPrint(); // Auto print the PDF
+    window.open(doc.output("bloburl"), "_blank");
   };
+  
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center p-6">
-      <div className="w-full max-w-lg bg-white text-gray-800 rounded-lg shadow-lg p-6">
-        <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">Payment Successful</h2>
-        <p className="text-lg mb-4 text-center">
-          Thank you for your payment. Your transaction has been completed successfully.
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">
+      <div className="w-full max-w-md bg-white text-gray-800 rounded-lg shadow-lg p-6">
+        <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">
+          Payment Confirmation
+        </h2>
 
-        <div className="space-y-4 mb-6">
-          <p><strong>Name:</strong> {paymentDetails?.userDetails?.fullName}</p>
-          <p><strong>Email:</strong> {paymentDetails?.userDetails?.email}</p>
-          <p><strong>Phone:</strong> {paymentDetails?.userDetails?.phone}</p>
-          <p className="text-2xl font-bold text-purple-700 text-center">
-            Amount Paid: ₹{paymentDetails?.amountPaid}
+        {paymentStatus && (
+          <p className="text-green-600 text-xl font-semibold text-center mb-4">
+            {paymentStatus}
           </p>
+        )}
+
+        <div className="space-y-4" id="invoice-content">
+          <p>
+            <strong>Full Name:</strong> {userDetails?.fullName}
+          </p>
+          <p>
+            <strong>Email:</strong> {userDetails?.email}
+          </p>
+          <p>
+            <strong>Phone:</strong> {userDetails?.phone}
+          </p>
+          <p>
+            <strong>Phone:</strong> {userDetails?.address}
+          </p>
+          <p>
+            <strong>Phone:</strong> {userDetails?.pincode}
+          </p>
+          <p>
+            <strong>Phone:</strong> {userDetails?.state}
+          </p>
+          <p className="text-2xl font-bold text-purple-700 text-center">
+            Total: ₹{totalAmount}
+          </p>
+
+          {/* Displaying products based on payment source */}
+          <div>
+            <h3 className="text-xl font-semibold text-gray-800">Purchased Items</h3>
+            <ul className="space-y-2">
+              {products.map((product, index) => (
+                <li key={index} className="border-b py-2">
+                  <p className="font-medium">{product.name}</p>
+                  <p className="text-gray-600">₹{product.price} x {product.quantity}</p>
+                  <p className="text-gray-500">Total: ₹{product.price * product.quantity}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
-        <div className="flex justify-center gap-4">
+        {/* Buttons for download and print invoice */}
+        <div className="mt-6 flex space-x-4">
           <button
-            onClick={generateInvoice}
-            className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white py-3 px-6 rounded-lg font-semibold w-full max-w-xs shadow-md transform hover:scale-105 transition duration-300"
+            onClick={handleDownloadInvoice}
+            className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white py-3 px-6 rounded-lg font-semibold w-full shadow-md transform hover:scale-105 transition duration-300"
           >
             Download Invoice
           </button>
           <button
-            onClick={printInvoice}
-            className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white py-3 px-6 rounded-lg font-semibold w-full max-w-xs shadow-md transform hover:scale-105 transition duration-300"
+            onClick={handlePrintInvoice}
+            className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white py-3 px-6 rounded-lg font-semibold w-full shadow-md transform hover:scale-105 transition duration-300"
           >
             Print Invoice
           </button>
@@ -95,6 +181,4 @@ const SuccessPage = () => {
       </div>
     </div>
   );
-};
-
-export default SuccessPage;
+}
