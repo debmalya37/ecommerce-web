@@ -23,7 +23,7 @@ export async function POST(req:Request, res:Response) {
 
   const options = {
     method: "GET",
-    url: `https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/status/${merchantId}/${transactionId}`,
+    url: `https://api.phonepe.com/apis/hermes/pg/v1/status/${merchantId}/${transactionId}`,
     headers: {
       accept: "application/json",
       "Content-Type": "application/json",
@@ -38,10 +38,10 @@ export async function POST(req:Request, res:Response) {
 
 
   if (response.data.code == "PAYMENT_SUCCESS")
-  return NextResponse.redirect("http://localhost:3000/success",{
+  return NextResponse.redirect("http://hiuri.in/success",{
     status: 301,
   });
-else return NextResponse.redirect("http://localhost:3000/failure",{
+else return NextResponse.redirect("http://hiuri.in/failure",{
   // a 301 status is required to redirect from a POST to a GET route
   status: 301,
 });

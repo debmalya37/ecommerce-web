@@ -15,6 +15,9 @@ export default function Navbar() {
           <Link href="/cart" className="ml-4 hover:underline">
             Cart
           </Link>
+          <Link href="/contact-us" className="ml-4 hover:underline">
+            Contact us
+          </Link>
         </div>
       </div>
     </nav>
