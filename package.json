@@ -12,6 +12,7 @@
     "@types/crypto-js": "^4.2.2",
     "axios": "^1.7.7",
     "crypto-js": "^4.2.0",
+    "jspdf": "^2.5.2",
     "mongoose": "^8.8.1",
     "next": "14.2.7",
     "nodemailer": "^6.10.0",
@@ -21,6 +22,7 @@
     "uuid": "^11.0.4"
   },
   "devDependencies": {
+    "@types/jspdf": "^2.0.0",
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.17",
     "@types/react": "^18",

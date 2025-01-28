@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import sha256 from "crypto-js/sha256";
 import axios from "axios";
 import { headers } from "next/headers";
-
+import sendPaymentEmail from "@/lib/sendEmail";
 
 export async function POST(req:Request) {
   try {
@@ -12,6 +12,11 @@ export async function POST(req:Request) {
   const status = data.get("code");
   const merchantId = data.get("merchantId");
   const transactionId = data.get("transactionId");
+
+  // Check for null and handle appropriately
+  if (!transactionId || typeof transactionId !== 'string') {
+    throw new Error("Transaction ID is missing or invalid.");
+  }
 
     const keyIndex = 1;
 
@@ -34,11 +39,23 @@ export async function POST(req:Request) {
     const response = await axios(options);
 
     if (response.data.success === true) {
-      return NextResponse.redirect("https://localhost:3000/success", {
+      // Call sendPaymentEmail if the payment is successful
+      const userDetails = {
+        name: data.get("name"),
+        phone: data.get("phone"),
+        email: data.get("email"),
+      };
+      const productDetails = {
+        productName: data.get("productName"),
+        productPrice: data.get("productPrice"),
+      };
+      await sendPaymentEmail(userDetails, transactionId, productDetails);
+
+      return NextResponse.redirect("https://hiuri.in/success", {
         status: 301,
       });
     } else {
-      return NextResponse.redirect("https://localhost:3000/failure", {
+      return NextResponse.redirect("https://hiuri.in/failure", {
         status: 301,
       });
     }
