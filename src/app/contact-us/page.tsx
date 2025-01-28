@@ -54,7 +54,7 @@ export default function ContactUsPage() {
           Contact Us
         </h1>
         <p className="text-gray-600 text-center mb-8">
-          Have questions or feedback? We'd love to hear from you. Please fill out the form below, and we'll get back to you as soon as possible.
+          Have questions or feedback? We&#39;d love to hear from you. Please fill out the form below, and we&#39;ll get back to you as soon as possible.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
