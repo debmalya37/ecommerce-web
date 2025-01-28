@@ -39,6 +39,61 @@ export default function SuccessPage() {
     setPaymentStatus("Payment Successful!");
   }, []);
 
+
+
+  useEffect(() => {
+    const user = JSON.parse(sessionStorage.getItem("userDetails") || "{}");
+    const source = sessionStorage.getItem("source");
+  
+    setUserDetails(user);
+  
+    let selectedProducts = [];
+    let total = 0;
+  
+    if (source === "cart") {
+      selectedProducts = JSON.parse(sessionStorage.getItem("cart") || "[]");
+      total = selectedProducts.reduce(
+        (sum: number, item: any) => sum + item.price * item.quantity,
+        0
+      );
+    } else if (source === "buy-now") {
+      const product = JSON.parse(sessionStorage.getItem("selectedProduct") || "{}");
+      selectedProducts = [product];
+      total = product.price * product.quantity || 0;
+    }
+  
+    setProducts(selectedProducts);
+    setTotalAmount(total);
+  
+    const emailDetails = {
+      userDetails: user,
+      transactionId: `TXN${Date.now()}`,
+      products: selectedProducts,
+      totalAmount: total,
+    };
+  
+    // Send email using the API
+    fetch("/api/send-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(emailDetails),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          console.log("Email sent successfully!");
+        } else {
+          console.error("Failed to send email:", data.message);
+        }
+      })
+      .catch((err) => {
+        console.error("Error sending email:", err);
+      });
+  }, []);
+  
+
   const handleDownloadInvoice = () => {
     const doc = new jsPDF();
 
@@ -49,6 +104,8 @@ export default function SuccessPage() {
     doc.text(`Full Name: ${userDetails?.fullName}`, 14, 30);
     doc.text(`Email: ${userDetails?.email}`, 14, 40);
     doc.text(`Phone: ${userDetails?.phone}`, 14, 50);
+    doc.text(`address: ${userDetails?.address}`, 14, 50);
+    doc.text(`pincode: ${userDetails?.pincode}`, 14, 50);
 
     let yPosition = 60;
     doc.text("Purchased Items:", 14, yPosition);
