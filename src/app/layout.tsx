@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import WalletBalance from "@/components/WalletBalance";
+import SessionProvider from "@/components/SessionProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,10 +20,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        
-      <Navbar />
-
-        {children}</body>
+        <SessionProvider> {/* ✅ Wrap everything inside */}
+          <Navbar />
+          {/* <WalletBalance /> */}
+          {children}
+        </SessionProvider>
+      </body>
     </html>
   );
 }
