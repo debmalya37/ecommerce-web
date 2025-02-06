@@ -6,7 +6,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function ProductDetails({ params }: { params: { id: string } }) {
-  const { addToCart } = useCart();
+  const userEmail = "user@example.com"; // Replace with actual user email
+  const { addToCart } = useCart(userEmail);
   const router = useRouter();
   const product = products.find((p) => p.id === params.id);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);

@@ -2,22 +2,28 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
+import { useWallet } from "@/hooks/useWallet"; // Add this import
 
 export default function SuccessPage() {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [totalAmount, setTotalAmount] = useState(0);
   const [products, setProducts] = useState<any[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const [walletEarned, setWalletEarned] = useState(0); // Add this state
+  const { updateWallet } = useWallet(userDetails?.email); // Add this hook
 
   const router = useRouter();
 
   useEffect(() => {
+    
+
     // Retrieve user details and source from session storage
     const user = JSON.parse(sessionStorage.getItem("userDetails") || "{}");
     const source = sessionStorage.getItem("source");
 
     setUserDetails(user);
 
+    let total = 0;
     if (source === "cart") {
       // Compute total from cart and fetch cart products
       const cart = JSON.parse(sessionStorage.getItem("cart") || "[]");
@@ -37,42 +43,66 @@ export default function SuccessPage() {
 
     // Simulate successful payment processing
     setPaymentStatus("Payment Successful!");
-  }, []);
+  }, [updateWallet]);
 
 
 
   useEffect(() => {
+    const handleWalletUpdate = () => {
+      // Get wallet details from session storage
+      const originalTotal = Number(sessionStorage.getItem('originalTotal'));
+      const walletUsed = Number(sessionStorage.getItem('walletUsed') || '0');
+
+      if (originalTotal) {
+        // Calculate earned coins (10% of original total)
+        const coinsEarned = Math.floor(originalTotal * 0.1);
+        // Update wallet balance (earned coins - used coins)
+        const netChange = coinsEarned - walletUsed;
+        updateWallet(netChange);
+        
+        // Set wallet earned for display
+        setWalletEarned(coinsEarned);
+        
+        // Clear session storage values
+        sessionStorage.removeItem('originalTotal');
+        sessionStorage.removeItem('walletUsed');
+      }
+    };
     const user = JSON.parse(sessionStorage.getItem("userDetails") || "{}");
     const source = sessionStorage.getItem("source");
   
     setUserDetails(user);
-  
     let selectedProducts = [];
     let total = 0;
-  
+    
     if (source === "cart") {
-      selectedProducts = JSON.parse(sessionStorage.getItem("cart") || "[]");
-      total = selectedProducts.reduce(
-        (sum: number, item: any) => sum + item.price * item.quantity,
-        0
-      );
+      const cart = JSON.parse(sessionStorage.getItem("cart") || "[]");
+      total = cart.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+      selectedProducts = cart;
     } else if (source === "buy-now") {
       const product = JSON.parse(sessionStorage.getItem("selectedProduct") || "{}");
-      selectedProducts = [product];
       total = product.price * product.quantity || 0;
+      selectedProducts = [product];
     }
-  
-    setProducts(selectedProducts);
+
+    // Store original total in session storage for wallet calculation
+    sessionStorage.setItem('originalTotal', total.toString());
+    
     setTotalAmount(total);
-  
+    setProducts(selectedProducts);
+    setPaymentStatus("Payment Successful!");
+
+    // Handle wallet update
+    handleWalletUpdate();
+
+    // Send email logic (keep your existing code here)
     const emailDetails = {
       userDetails: user,
       transactionId: `TXN${Date.now()}`,
       products: selectedProducts,
       totalAmount: total,
     };
-  
-    // Send email using the API
+
     fetch("/api/send-email", {
       method: "POST",
       headers: {
@@ -80,23 +110,23 @@ export default function SuccessPage() {
       },
       body: JSON.stringify(emailDetails),
     })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          console.log("Email sent successfully!");
-        } else {
-          console.error("Failed to send email:", data.message);
-        }
-      })
-      .catch((err) => {
-        console.error("Error sending email:", err);
-      });
-  }, []);
-  
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data.success) {
+        console.error("Failed to send email:", data.message);
+      }
+    })
+    .catch((err) => {
+      console.error("Error sending email:", err);
+    });
 
+  }, [updateWallet]); // Add updateWallet to dependencies
+
+  // Add wallet information to the PDF
   const handleDownloadInvoice = () => {
     const doc = new jsPDF();
 
+    // ... (keep your existing PDF code)
     doc.setFontSize(18);
     doc.text("Invoice", 14, 20);
 
@@ -166,23 +196,46 @@ export default function SuccessPage() {
   
     doc.autoPrint(); // Auto print the PDF
     window.open(doc.output("bloburl"), "_blank");
-  };
-  
 
+    // Add wallet information
+    const walletUsed = Number(sessionStorage.getItem('walletUsed') || '0');
+    if (walletUsed > 0) {
+      yPosition += 10;
+      doc.text(`Wallet Used: ₹${walletUsed}`, 14, yPosition);
+    }
+    yPosition += 10;
+    doc.text(`Coins Earned: ₹${walletEarned}`, 14, yPosition);
+
+    doc.save("invoice.pdf");
+  };
+
+  // Update your JSX to show wallet information
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">
       <div className="w-full max-w-md bg-white text-gray-800 rounded-lg shadow-lg p-6">
         <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">
           Payment Confirmation
         </h2>
-
         {paymentStatus && (
           <p className="text-green-600 text-xl font-semibold text-center mb-4">
             {paymentStatus}
           </p>
-        )}
+          )}
+        {/* Add wallet summary */}
+        <div className="bg-purple-100 p-4 rounded-md mb-4">
+          <div className="text-center">
+            <p className="text-green-600 font-semibold">
+              Earned Coins: ₹{walletEarned} ({walletEarned} coins)
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              (10% of your purchase amount added to wallet)
+            </p>
+          </div>
+        </div>
 
-        <div className="space-y-4" id="invoice-content">
+        {/* Rest of your existing JSX remains the same */}
+        {/* ... */}
+         <div className="space-y-4" id="invoice-content">
           <p>
             <strong>Full Name:</strong> {userDetails?.fullName}
           </p>

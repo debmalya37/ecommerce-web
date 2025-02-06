@@ -1,49 +1,38 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 type CartItem = {
-  id: string;
+  productId: string;
   name: string;
   price: number;
   quantity: number;
 };
 
-export function useCart() {
+export function useCart(userEmail: string) {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    // Retrieve cart data from localStorage
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
-    }
-  }, []);
+    if (!userEmail) return;
 
-  const addToCart = (item: CartItem) => {
-    setCart((prev) => {
-      // Check if item already exists in the cart
-      const existingItemIndex = prev.findIndex((i) => i.id === item.id);
-      let updatedCart = [...prev];
-
-      if (existingItemIndex >= 0) {
-        updatedCart[existingItemIndex].quantity += item.quantity;
-      } else {
-        updatedCart.push(item);
-      }
-
-      // Save to localStorage
-      localStorage.setItem('cart', JSON.stringify(updatedCart));
-      return updatedCart;
+    axios.get(`/api/cart?email=${userEmail}`).then((res) => {
+      setCart(res.data.cart);
     });
+  }, [userEmail]);
+
+  const updateCart = async (newCart: CartItem[]) => {
+    setCart(newCart);
+    await axios.post("/api/cart", { email: userEmail, cartItems: newCart });
   };
 
-  const removeFromCart = (id: string) => {
-    setCart((prev) => {
-      const updatedCart = prev.filter((item) => item.id !== id);
-      // Save to localStorage
-      localStorage.setItem('cart', JSON.stringify(updatedCart));
-      return updatedCart;
-    });
+  const addToCart = async (item: CartItem) => {
+    const updatedCart = [...cart, item];
+    await updateCart(updatedCart);
+  };
+
+  const removeFromCart = async (productId: string) => {
+    const updatedCart = cart.filter((item) => item.productId !== productId);
+    await updateCart(updatedCart);
   };
 
   return { cart, addToCart, removeFromCart };
