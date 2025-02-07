@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function Profile() {
   const [user, setUser] = useState<any>(null);
+  const router = useRouter();
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -15,7 +19,11 @@ export default function Profile() {
     pincode: "",
     country: "India",
   });
-
+  const userEmail = session?.user?.email || "";
+  if (!userEmail) {
+    // If the user is not allowed, redirect to the homepage.
+    router.push("/login");
+  }
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -30,6 +38,7 @@ export default function Profile() {
         });
       } catch (err) {
         setError("Failed to fetch user data.");
+        router.push("/login");
       } finally {
         setLoading(false);
       }

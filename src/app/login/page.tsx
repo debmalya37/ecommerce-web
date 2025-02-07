@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -38,6 +39,7 @@ export default function LoginPage() {
           <input type="password" name="password" placeholder="Password" onChange={handleChange} required className="w-full p-3 border rounded" />
           <button type="submit" className="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">Login</button>
         </form>
+        <p>New User? <Link rel="stylesheet" href="/register">Create an account</Link></p>
       </div>
     </div>
   );
