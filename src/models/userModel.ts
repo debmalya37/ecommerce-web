@@ -1,6 +1,13 @@
 import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 
+export interface ITransaction {
+  transactionId: string;
+  amount: number;
+  products: string[]; // or a more complex object if needed
+  date: Date;
+}
+
 export interface IUser extends Document {
   fullName: string;
   email: string;
@@ -18,6 +25,7 @@ export interface IUser extends Document {
     productId: mongoose.Schema.Types.ObjectId;
     quantity: number;
   }[];
+  transactions: ITransaction[];  // New field for transaction history
   comparePassword(password: string): Promise<boolean>;
 }
 
@@ -38,6 +46,14 @@ const UserSchema = new Schema<IUser>({
     {
       productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
       quantity: { type: Number, default: 1 },
+    },
+  ],
+  transactions: [
+    {
+      transactionId: { type: String, required: true },
+      amount: { type: Number, required: true },
+      products: [{ type: String }], // Array of product names (or IDs, etc.)
+      date: { type: Date, default: Date.now },
     },
   ],
 });

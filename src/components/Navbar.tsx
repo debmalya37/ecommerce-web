@@ -12,6 +12,9 @@ export default function Navbar() {
           <Link href="/products" className="ml-4 hover:underline">
             Products
           </Link>
+          <Link href="/profile" className="ml-4 hover:underline">
+            Profile
+          </Link>
           <Link href="/cart" className="ml-4 hover:underline">
             Cart
           </Link>

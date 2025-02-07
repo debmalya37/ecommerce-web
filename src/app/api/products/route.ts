@@ -5,10 +5,23 @@ import Product from "@/models/product";
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();
+    const { searchParams } = new URL(req.url);
+    const productId = searchParams.get("id");
+
+    if (productId) {
+      // Fetch a specific product
+      const product = await Product.findById(productId);
+      if (!product) {
+        return NextResponse.json({ error: "Product not found" }, { status: 404 });
+      }
+      return NextResponse.json(product);
+    }
+
+    // Fetch all products if no ID is provided
     const products = await Product.find({});
     return NextResponse.json(products);
   } catch (error: any) {
-    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch products", details: error.message }, { status: 500 });
   }
 }
 

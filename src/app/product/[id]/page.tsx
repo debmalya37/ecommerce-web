@@ -1,37 +1,68 @@
 "use client";
 
-import { products } from '@/data/products';
-import { useCart } from '@/hooks/useCart';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react"; // Import useSession
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function ProductDetails({ params }: { params: { id: string } }) {
-  const userEmail = "user@example.com"; // Replace with actual user email
-  const { addToCart } = useCart(userEmail);
+  const { data: session } = useSession(); // Get session data
+  const userEmail = session?.user?.email || ""; // Fetch user email
+
   const router = useRouter();
-  const product = products.find((p) => p.id === params.id);
+  const [product, setProduct] = useState<any>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  if (!product) return <p>Product not found</p>;
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await axios.get(`/api/products?id=${params.id}`);
+        setProduct(response.data);
+      } catch (error) {
+        console.error("Error fetching product details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (params.id) {
+      fetchProduct();
+    }
+  }, [params.id]);
+
+  if (loading) return <p className="text-center mt-10 text-gray-600">Loading...</p>;
+  if (!product) return <p className="text-center mt-10 text-red-600">Product not found</p>;
 
   const handleAddToCart = () => {
-    addToCart({ ...product, quantity });
-    router.push('/cart'); // Redirect to cart page
+    const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
+    
+    const newProduct = {
+      _id: product._id,
+      name: product.name,
+      quantity,
+      price: product.price,
+    };
+
+    // Add new product or update quantity if already in the cart
+    const existingProductIndex = cartItems.findIndex((item: any) => item._id === newProduct._id);
+    if (existingProductIndex !== -1) {
+      cartItems[existingProductIndex].quantity += quantity;
+    } else {
+      cartItems.push(newProduct);
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+    router.push("/cart");
   };
 
   const handleBuyNow = () => {
-    // Store selected product details and mark source as buy-now
-    sessionStorage.setItem(
-      'selectedProduct',
-      JSON.stringify({ ...product, quantity })
-    );
-    sessionStorage.setItem('source', 'buy-now');
-    router.push('/userBillingDetails'); // Redirect to billing details page
+    sessionStorage.setItem("selectedProduct", JSON.stringify({ ...product, quantity }));
+    sessionStorage.setItem("source", "buy-now");
+    router.push("/userBillingDetails");
   };
-
-  if (!product) return <p>Product not found</p>;
 
   const handleNextImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex + 1) % product.images.length);
@@ -40,8 +71,6 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   const handlePrevImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex - 1 + product.images.length) % product.images.length);
   };
-
-  
 
   const openModal = () => {
     setIsModalOpen(true); // Open modal
@@ -60,7 +89,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-8 bg-sky-200 h-[100vh]">
+    <div className="container mx-auto p-6 space-y-8 bg-gray-100 min-h-screen">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Image Section */}
         <div className="space-y-4">
@@ -69,32 +98,31 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
               src={product.images[currentImageIndex]}
               alt={product.name}
               className="w-full h-full object-contain cursor-pointer"
-              onClick={openModal}
-              onError={(e) => (e.currentTarget.src = '/images/placeholder.jpg')}
+              onClick={() => setIsModalOpen(true)}
+              onError={(e) => (e.currentTarget.src = "/images/placeholder.jpg")}
             />
             <button
-              onClick={handlePrevImage}
+              onClick={() => setCurrentImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length)}
               className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-gray-600 text-white p-3 rounded-full"
             >
               &lt;
             </button>
             <button
-              onClick={handleNextImage}
+              onClick={() => setCurrentImageIndex((prev) => (prev + 1) % product.images.length)}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-600 text-white p-3 rounded-full"
             >
               &gt;
             </button>
           </div>
-
           {/* Thumbnail Navigation */}
           <div className="flex space-x-4 overflow-x-auto bg-sky-100 rounded-md">
-            {product.images.map((image, index) => (
+          {product.images.map((image: string | undefined, index: number) => (
               <img
                 key={index}
                 src={image}
                 alt={`Thumbnail ${index + 1}`}
                 className={`w-20 h-20 object-cover rounded-md cursor-pointer ${
-                  currentImageIndex === index ? 'border-2 border-blue-600' : ''
+                  currentImageIndex === index ? "border-2 border-blue-600" : ""
                 }`}
                 onClick={() => setCurrentImageIndex(index)}
               />
@@ -107,41 +135,59 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
           <h1 className="text-3xl font-semibold text-gray-800">{product.name}</h1>
           <p className="text-gray-600">{product.description}</p>
           <p className="text-2xl font-bold text-gray-900">₹{product.price}</p>
+          <p className="text-sm text-gray-500 line-through">₹{product.originalPrice}</p>
+
+          {/* Stock Status */}
+          {product.stock === 0 ? (
+            <p className="text-red-600 font-bold text-lg">Out of Stock</p>
+          ) : (
+            <p className="text-green-600 font-semibold">In Stock: {product.stock}</p>
+          )}
 
           {/* Quantity Selector */}
-          {/* Quantity Selector */}
-          <div className="flex items-center space-x-4">
-            <label htmlFor="quantity" className="text-lg text-gray-700">
-              Quantity:
-            </label>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={decrementQuantity}
-                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-              >
-                -
-              </button>
-              <span className="text-lg font-semibold">{quantity}</span>
-              <button
-                onClick={incrementQuantity}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-900"
-              >
-                +
-              </button>
+          {product.stock > 0 && (
+            <div className="flex items-center space-x-4">
+              <label htmlFor="quantity" className="text-lg text-gray-700">
+                Quantity:
+              </label>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={decrementQuantity}
+                  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                >
+                  -
+                </button>
+                <span className="text-lg font-semibold">{quantity}</span>
+                <button
+                  onClick={incrementQuantity}
+                  className={`px-4 py-2 rounded-md ${
+                    quantity < product.stock ? "bg-green-600 hover:bg-green-900 text-white" : "bg-gray-400 text-gray-700 cursor-not-allowed"
+                  }`}
+                  disabled={quantity >= product.stock}
+                >
+                  +
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex space-x-4">
             <button
               onClick={handleAddToCart}
-              className="bg-blue-600 text-white py-2 px-6 rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`py-2 px-6 rounded-md shadow-md ${
+                product.stock === 0 ? "bg-gray-400 text-gray-700 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
+              disabled={product.stock === 0}
             >
               Add to Cart
             </button>
             <button
               onClick={handleBuyNow}
-              className="bg-yellow-500 text-white py-2 px-6 rounded-md shadow-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              className={`py-2 px-6 rounded-md shadow-md ${
+                product.stock === 0 ? "bg-gray-400 text-gray-700 cursor-not-allowed" : "bg-yellow-500 hover:bg-yellow-600 text-white"
+              }`}
+              disabled={product.stock === 0}
             >
               Buy Now
             </button>
@@ -152,18 +198,11 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
       {/* Modal for Full-Size Image */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="relative bg-gray-700 p-6 rounded-lg max-w-[90vw] max-h-[90vh]">
-            <button
-              onClick={closeModal}
-              className="absolute top-2 right-2 text-black text-3xl"
-            >
+          <div className="relative bg-white p-6 rounded-lg max-w-[90vw] max-h-[90vh]">
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-2 right-2 text-gray-600 text-3xl">
               &times;
             </button>
-            <img
-              src={product.images[currentImageIndex]}
-              alt={product.name}
-              className="w-full h-full object-contain"
-            />
+            <img src={product.images[currentImageIndex]} alt={product.name} className="w-full h-full object-contain" />
           </div>
         </div>
       )}

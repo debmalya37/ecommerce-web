@@ -1,16 +1,20 @@
-// src/hooks/useWallet.ts
 import { useState, useEffect } from "react";
 
-export const useWallet = (userEmail: string) => {
-  const [walletBalance, setWalletBalance] = useState<number>(0);
+export function useWallet(email: string) {
+  const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
-    if (!userEmail) return;
-    fetch(`/api/user/wallet?email=${userEmail}`)
+    if (!email) return;
+
+    fetch(`/api/update-wallet?email=${email}`)
       .then((res) => res.json())
-      .then((data) => setWalletBalance(data.balance))
-      .catch(() => setWalletBalance(0));
-  }, [userEmail]);
+      .then((data) => {
+        if (data.success) {
+          setWalletBalance(data.balance);
+        }
+      })
+      .catch((err) => console.error("Error fetching wallet:", err));
+  }, [email]);
 
   return { walletBalance };
-};
+}

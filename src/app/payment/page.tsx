@@ -1,21 +1,43 @@
-// src/app/payment/page.tsx (updated)
 "use client";
 import axios from 'axios';
 import { useState, useEffect } from 'react';
-import { useWallet } from '@/hooks/useWallet';
+import { useRouter } from 'next/navigation';
 
 export default function PaymentPage() {
   const [userDetails, setUserDetails] = useState<any>(null);
   const [totalAmount, setTotalAmount] = useState(0);
   const [walletUsed, setWalletUsed] = useState(0);
-  const { walletBalance } = useWallet(userDetails?.email);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [walletCoins, setWalletCoins] = useState(0);
   const [adjustedTotal, setAdjustedTotal] = useState(totalAmount);
+  const router = useRouter();
 
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem('userDetails') || '{}');
-    const source = sessionStorage.getItem('source');
     setUserDetails(user);
 
+    if (!user?.email) {
+      // Redirect to login if no user details found in session
+      router.push('/login');
+      return;
+    }
+
+    // Fetch user wallet details (walletBalance, walletCoins)
+    const fetchUserWalletDetails = async () => {
+      try {
+        const response = await axios.get(`/api/user?email=${user.email}`);
+        if (response.data) {
+          setWalletBalance(response.data.wallet.balance);
+          setWalletCoins(response.data.wallet.coins);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user wallet details:", error);
+      }
+    };
+
+    fetchUserWalletDetails();
+
+    const source = sessionStorage.getItem('source');
     let total = 0;
     if (source === 'cart') {
       const cart = JSON.parse(sessionStorage.getItem('cart') || '[]');
@@ -38,15 +60,40 @@ export default function PaymentPage() {
   };
 
   const handlePayment = async () => {
+    sessionStorage.removeItem("rewardGiven");
+    if (walletUsed > 0) {
+      try {
+        // Deduct wallet balance first
+        const walletUpdateResponse = await axios.post('/api/updateWallet', {
+          email: userDetails.email,
+          amountUsed: walletUsed,
+        });
+  
+        if (walletUpdateResponse.data.error) {
+          console.error("Wallet update failed:", walletUpdateResponse.data.error);
+          return;
+        }
+  
+        setWalletBalance(walletUpdateResponse.data.newBalance); // Update UI with new balance
+      } catch (error) {
+        console.error("Failed to update wallet balance:", error);
+        return;
+      }
+    }
+  
     sessionStorage.setItem('originalTotal', totalAmount.toString());
     sessionStorage.setItem('walletUsed', walletUsed.toString());
-
+  
     try {
       const response = await axios.post('/api/phonepe-payment', {
         amount: adjustedTotal,
         userDetails,
       });
-
+  
+      if (response.data.transactionId) {
+        sessionStorage.setItem("transactionId", response.data.transactionId); // Store transaction ID in session
+      }
+  
       if (response.data.redirect) {
         window.location.href = response.data.redirect;
       } else {
@@ -56,6 +103,8 @@ export default function PaymentPage() {
       console.error('Payment initiation failed:', error);
     }
   };
+  
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">
@@ -93,7 +142,7 @@ export default function PaymentPage() {
           <p><strong>Full Name:</strong> {userDetails?.fullName}</p>
           <p><strong>Email:</strong> {userDetails?.email}</p>
           <p><strong>Phone:</strong> {userDetails?.phone}</p>
-          
+
           {/* Price Details */}
           <div className="space-y-2">
             <div className="flex justify-between">

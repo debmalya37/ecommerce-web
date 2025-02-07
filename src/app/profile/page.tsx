@@ -87,6 +87,7 @@ export default function Profile() {
             <div>
               <label className="block text-gray-700 font-semibold">Phone</label>
               <input
+              title="Phone"
                 type="text"
                 name="phone"
                 value={formData.phone}
@@ -98,6 +99,7 @@ export default function Profile() {
             <div>
               <label className="block text-gray-700 font-semibold">Address</label>
               <input
+              title="Address"
                 type="text"
                 name="address"
                 value={formData.address}
@@ -109,6 +111,7 @@ export default function Profile() {
             <div>
               <label className="block text-gray-700 font-semibold">State</label>
               <input
+              title="state"
                 type="text"
                 name="state"
                 value={formData.state}
@@ -120,6 +123,7 @@ export default function Profile() {
             <div>
               <label className="block text-gray-700 font-semibold">Pincode</label>
               <input
+              title="Pincode"
                 type="text"
                 name="pincode"
                 value={formData.pincode}
@@ -131,6 +135,7 @@ export default function Profile() {
             <div>
               <label className="block text-gray-700 font-semibold">Country</label>
               <select
+              title="Country"
                 name="country"
                 value={formData.country}
                 onChange={handleChange}

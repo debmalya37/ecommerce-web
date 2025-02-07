@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
+import axios from "axios";
 import { useWallet } from "@/hooks/useWallet"; // Import the useWallet hook
 
 export default function SuccessPage() {
@@ -14,7 +15,7 @@ export default function SuccessPage() {
 
   const router = useRouter();
 
-  // First effect: Retrieve user details, payment source, and compute totals.
+  // First effect: retrieve user details, payment source, compute totals, etc.
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem("userDetails") || "{}");
     const source = sessionStorage.getItem("source");
@@ -38,37 +39,30 @@ export default function SuccessPage() {
     setPaymentStatus("Payment Successful!");
   }, []);
 
-  // Second effect: Update wallet reward only once per valid purchase.
+  // Second effect: update wallet reward (if needed) and add transaction record
   useEffect(() => {
-    const handleWalletUpdate = async () => {
+    const addTransactionRecord = async () => {
+      // Get necessary details from session storage
       const originalTotal = Number(sessionStorage.getItem("originalTotal"));
       const walletUsed = Number(sessionStorage.getItem("walletUsed") || "0");
       const transactionId = sessionStorage.getItem("transactionId");
       const rewardGiven = sessionStorage.getItem("rewardGiven");
-
-      // Determine if the current URL is coming from a valid payment flow.
-      let isValidRedirect = false;
-      if (typeof window !== "undefined") {
-        const currentUrl = window.location.href;
-        if (currentUrl.includes("sltTkn=") || currentUrl.includes("/api/status/")) {
-          isValidRedirect = true;
-        }
-      }
-
-      // Only update if we have a transactionId and reward hasn't already been given.
+      // In a valid payment flow (e.g. coming from PhonePe), transactionId is provided.
       if (!transactionId) {
-        console.log("Transaction ID missing. No reward update.");
+        console.log("No valid transactionId. Skipping transaction record update.");
         return;
       }
       if (rewardGiven) {
         console.log("Reward already given for this transaction. Skipping update.");
         return;
       }
-
+      
+      // Calculate coins earned (10% of originalTotal) and net reward (earned coins - walletUsed)
       if (originalTotal) {
         const coinsEarned = Math.floor(originalTotal * 0.1);
         const netChange = coinsEarned - walletUsed;
-
+        // Optionally update wallet reward here (if you use an API for that)
+        setWalletEarned(coinsEarned);
         try {
           const response = await fetch("/api/update-wallet", {
             method: "POST",
@@ -89,18 +83,40 @@ export default function SuccessPage() {
         }
       }
 
-      // If NOT coming from a valid payment URL, clear reward-related session storage keys.
-      // if (!isValidRedirect) {
-      //   sessionStorage.removeItem("originalTotal");
-      //   sessionStorage.removeItem("walletUsed");
-      //   sessionStorage.removeItem("transactionId");
-      // }
+      // Prepare transaction record details
+      // For purchased products, we can simply map to their names (or any field you prefer)
+      const purchasedProducts = products.map((p) => p.name);
+      const transactionData = {
+        email: userDetails.email,
+        transactionId,
+        amount: totalAmount,
+        products: purchasedProducts,
+      };
+
+      try {
+        // Call the API endpoint to add the transaction record to the user's model
+        await axios.post("/api/add-transaction", transactionData);
+      } catch (error) {
+        console.error("Error adding transaction record:", error);
+      }
+      
+      // Optionally, if the user did NOT come from a valid payment flow, you may clear these values.
+      // For valid flows (from PhonePe or /api/status/[id]), you might want to leave them.
+      // For example, if the URL does NOT contain a valid PhonePe token, you can clear them:
+      if (typeof window !== "undefined") {
+        const currentUrl = window.location.href;
+        if (!currentUrl.includes("sltTkn=") && !currentUrl.includes("/api/status/")) {
+          sessionStorage.removeItem("originalTotal");
+          sessionStorage.removeItem("walletUsed");
+          sessionStorage.removeItem("transactionId");
+        }
+      }
     };
 
     if (userDetails?.email) {
-      handleWalletUpdate();
+      addTransactionRecord();
     }
-  }, [userDetails?.email]);
+  }, [userDetails?.email, products, totalAmount]);
 
   // PDF Download function
   const handleDownloadInvoice = () => {
@@ -171,11 +187,9 @@ export default function SuccessPage() {
 
     doc.text(`Total: ₹${totalAmount}`, 14, yPosition + 10);
 
-    // Automatically print the PDF
     doc.autoPrint();
     window.open(doc.output("bloburl"), "_blank");
 
-    // Optionally add wallet info in the printed invoice
     const walletUsedValue = Number(sessionStorage.getItem("walletUsed") || "0");
     if (walletUsedValue > 0) {
       yPosition += 10;

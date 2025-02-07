@@ -1,6 +1,9 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from "next-auth/react"; 
+
+
 
 const states = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
@@ -14,18 +17,51 @@ export default function UserBillingDetailsPage() {
   const [pincode, setPincode] = useState('');
   const [state, setState] = useState('');
   const [isFormValid, setIsFormValid] = useState(false);
-
   const router = useRouter();
+  const { data: session } = useSession(); // Get session data
+  
+  // Function to fetch user data based on session email
+  const fetchUserData = async (userEmail: string) => {
+    // Replace with actual method to fetch user data from the database
+    const response = await fetch(`/api/user?email=${userEmail}`);
+    const data = await response.json();
+    return data;
+  };
+
+  useEffect(() => {
+    const userEmail =  session?.user?.email || "";// Get session email
+    if (!userEmail) {
+      // Redirect to login page if no session user is found
+      router.push('/login');
+      return;
+    }
+
+    // Fetch user details from the database using the session email
+    const loadUserData = async () => {
+      const user = await fetchUserData(userEmail);
+      if (user) {
+        // Populate form with fetched user details
+        setFullName(user.fullName);
+        setEmail(user.email);
+        setPhone(user.phone);
+        setAddress(user.address);
+        setPincode(user.pincode);
+        setState(user.state);
+      }
+    };
+
+    loadUserData();
+  }, [router]);
 
   const handleSubmit = () => {
     if (!fullName || !email || !phone || !address || !pincode || !state) {
       alert('Please fill in all fields');
       return;
     }
-  
+
     // Retrieve product details from sessionStorage
     const selectedProduct = JSON.parse(sessionStorage.getItem('selectedProduct') || '{}');
-  
+
     // Save billing and product details to sessionStorage
     sessionStorage.setItem('userDetails', JSON.stringify({
       fullName,
@@ -37,11 +73,10 @@ export default function UserBillingDetailsPage() {
       country: 'India',
       product: selectedProduct,
     }));
-  
+
     // Redirect to payment page
     router.push('/payment');
   };
-  
 
   return (
     <div className="container mx-auto p-6 space-y-8 max-w-lg">
@@ -124,7 +159,7 @@ export default function UserBillingDetailsPage() {
         <div>
           <label className="block text-lg text-gray-700">Country</label>
           <input
-          title='country'
+            title='country'
             type="text"
             value="India"
             disabled

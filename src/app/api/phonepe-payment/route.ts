@@ -57,7 +57,8 @@ export async function POST(request: Request) {
 
     const redirect=response.data.data.instrumentResponse.redirectInfo.url;
   console.log(redirect);
-  return NextResponse.json({ redirect }); // Return response as JSON
+  return NextResponse.json({ redirect, transactionId }); // Send transactionId along with the redirect URL
+ // Return response as JSON
 
 
     

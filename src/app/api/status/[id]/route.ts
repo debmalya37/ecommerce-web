@@ -34,6 +34,8 @@ export async function POST(req:Request) {
     const response = await axios(options);
 
     if (response.data.success === true) {
+
+      
       return NextResponse.redirect("https://hiuri.in/success", {
         status: 301,
       });

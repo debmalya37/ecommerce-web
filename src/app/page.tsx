@@ -44,7 +44,7 @@ export default function HomePage() {
 
 
 
-      {/* Featured Products Section */}
+      {/* Featured Products Section
       <section className="bg-white py-12">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold text-gray-800 text-center mb-8">
@@ -83,7 +83,7 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Call to Action Section */}
       <section className="bg-blue-600 text-white py-12">
