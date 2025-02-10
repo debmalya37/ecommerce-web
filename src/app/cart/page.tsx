@@ -21,6 +21,7 @@ export default function CartPage() {
   const handleCheckout = async () => {
     // Store cart and total amount in session storage for checkout
     sessionStorage.setItem("cart", JSON.stringify(cart));
+    sessionStorage.setItem('source', 'cart'); 
     sessionStorage.setItem("total", total.toString());
 
     // Redirect to the payment page

@@ -15,6 +15,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   const [quantity, setQuantity] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [alreadyInCart, setAlreadyInCart] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -33,12 +34,25 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     }
   }, [params.id]);
 
+  useEffect(() => {
+    if (product) {
+      const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
+      const exists = cartItems.some((item: any) => item._id === product._id);
+      setAlreadyInCart(exists);
+    }
+  }, [product]);
+
+
+
   if (loading) return <p className="text-center mt-10 text-gray-600">Loading...</p>;
   if (!product) return <p className="text-center mt-10 text-red-600">Product not found</p>;
 
   const handleAddToCart = () => {
+    // If already in cart, do nothing
+    if (alreadyInCart) return;
+
     const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
-    
+
     const newProduct = {
       _id: product._id,
       name: product.name,
@@ -46,17 +60,13 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
       price: product.price,
     };
 
-    // Add new product or update quantity if already in the cart
-    const existingProductIndex = cartItems.findIndex((item: any) => item._id === newProduct._id);
-    if (existingProductIndex !== -1) {
-      cartItems[existingProductIndex].quantity += quantity;
-    } else {
-      cartItems.push(newProduct);
-    }
-
+    // Add new product to the cart
+    cartItems.push(newProduct);
     localStorage.setItem("cart", JSON.stringify(cartItems));
-    router.push("/cart");
+    setAlreadyInCart(true); // Update state so button shows as disabled
+    alert("Product added to cart successfully!");
   };
+
 
   const handleBuyNow = () => {
     sessionStorage.setItem("selectedProduct", JSON.stringify({ ...product, quantity }));
@@ -173,14 +183,16 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
 
           {/* Action Buttons */}
           <div className="flex space-x-4">
-            <button
+          <button
               onClick={handleAddToCart}
+              disabled={alreadyInCart || product.stock === 0}
               className={`py-2 px-6 rounded-md shadow-md ${
-                product.stock === 0 ? "bg-gray-400 text-gray-700 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 text-white"
+                product.stock === 0 || alreadyInCart
+                  ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
               }`}
-              disabled={product.stock === 0}
             >
-              Add to Cart
+              {alreadyInCart ? "Already in Cart" : "Add to Cart"}
             </button>
             <button
               onClick={handleBuyNow}
