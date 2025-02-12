@@ -79,7 +79,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Call to Action Section */}
+      {/* Call to Action Section
+      <section className="bg-blue-600 text-white py-12">
+        <div className="container mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold mb-4">Join Thousands of Happy Customers!</h2>
+          <p className="text-lg mb-6">
+            Discover the perfect cleaning solutions for your home at Hiuri.
+          </p>
+          <Link
+            href="/products"
+            className="bg-yellow-400 hover:bg-yellow-500 text-blue-800 py-3 px-6 rounded-lg font-semibold shadow-md transition"
+          >
+            Start Shopping
+          </Link>
+        </div>
+      </section> */}
+
+      
+
+      {/* Call to Action Section (repeat) */}
       <section className="bg-blue-600 text-white py-12">
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold mb-4">Join Thousands of Happy Customers!</h2>
@@ -105,22 +123,6 @@ export default function HomePage() {
           <p className="text-lg text-gray-700 mb-6">
             With sustainability at our core, we prioritize eco-friendly practices and carefully select ingredients that are effective yet gentle on the environment. Our mission is to set new standards in cleanliness while contributing to a healthier, greener future.
           </p>
-        </div>
-      </section>
-
-      {/* Call to Action Section (repeat) */}
-      <section className="bg-blue-600 text-white py-12">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold mb-4">Join Thousands of Happy Customers!</h2>
-          <p className="text-lg mb-6">
-            Discover the perfect cleaning solutions for your home at Hiuri.
-          </p>
-          <Link
-            href="/products"
-            className="bg-yellow-400 hover:bg-yellow-500 text-blue-800 py-3 px-6 rounded-lg font-semibold shadow-md transition"
-          >
-            Start Shopping
-          </Link>
         </div>
       </section>
 
