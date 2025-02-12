@@ -187,30 +187,32 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
             )}
 
             {/* Action Buttons */}
-            <div className="flex space-x-4">
-              <button
-                onClick={handleAddToCart}
-                disabled={alreadyInCart || product.stock === 0}
-                className={`py-2 px-6 rounded-md shadow-md ${
-                  product.stock === 0 || alreadyInCart
-                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
-              >
-                {alreadyInCart ? "Already in Cart" : "Add to Cart"}
-              </button>
-              <button
-                onClick={handleBuyNow}
-                disabled={product.stock === 0}
-                className={`py-2 px-6 rounded-md shadow-md ${
-                  product.stock === 0
-                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                    : "bg-yellow-500 hover:bg-yellow-600 text-white"
-                }`}
-              >
-                Buy Now
-              </button>
-            </div>
+            {/* Fixed Action Buttons for Mobile */}
+<div className="fixed bottom-0 left-0 right-0 bg-white shadow-md p-4 flex justify-between z-50 md:flex space-x-4">
+  <button
+    onClick={handleAddToCart}
+    disabled={alreadyInCart || product.stock === 0}
+    className={`flex-1 mx-1 py-3 text-lg font-semibold rounded-md ${
+      product.stock === 0 || alreadyInCart
+        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+        : "bg-blue-600 hover:bg-blue-700 text-white"
+    }`}
+  >
+    {alreadyInCart ? "Already in Cart" : "Add to Cart"}
+  </button>
+  <button
+    onClick={handleBuyNow}
+    disabled={product.stock === 0}
+    className={`flex-1 mx-1 py-3 text-lg font-semibold rounded-md ${
+      product.stock === 0
+        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+        : "bg-orange-500 hover:bg-orange-600 text-white"
+    }`}
+  >
+    Buy Now
+  </button>
+</div>
+
           </div>
         </div>
       </div>
