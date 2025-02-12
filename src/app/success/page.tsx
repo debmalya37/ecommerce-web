@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import axios from "axios";
@@ -42,12 +42,12 @@ export default function SuccessPage() {
   // Second effect: update wallet reward (if needed) and add transaction record
   useEffect(() => {
     const addTransactionRecord = async () => {
-      // Get necessary details from session storage
       const originalTotal = Number(sessionStorage.getItem("originalTotal"));
       const walletUsed = Number(sessionStorage.getItem("walletUsed") || "0");
       const transactionId = sessionStorage.getItem("transactionId");
       const rewardGiven = sessionStorage.getItem("rewardGiven");
-      // In a valid payment flow (e.g. coming from PhonePe), transactionId is provided.
+
+      // In a valid payment flow, transactionId must be provided.
       if (!transactionId) {
         console.log("No valid transactionId. Skipping transaction record update.");
         return;
@@ -56,12 +56,12 @@ export default function SuccessPage() {
         console.log("Reward already given for this transaction. Skipping update.");
         return;
       }
-      
-      // Calculate coins earned (10% of originalTotal) and net reward (earned coins - walletUsed)
+
       if (originalTotal) {
-        const coinsEarned = Math.floor(originalTotal * 0.1);
+        // New reward logic: 1 coin and ₹1 wallet reward for every ₹50 spent.
+        const coinsEarned = Math.floor(originalTotal / 50);
+        // Deduct any wallet amount used.
         const netChange = coinsEarned - walletUsed;
-        // Optionally update wallet reward here (if you use an API for that)
         setWalletEarned(coinsEarned);
         try {
           const response = await fetch("/api/update-wallet", {
@@ -83,8 +83,7 @@ export default function SuccessPage() {
         }
       }
 
-      // Prepare transaction record details
-      // For purchased products, we can simply map to their names (or any field you prefer)
+      // Post the transaction record (no clearing if valid payment flow)
       const purchasedProducts = products.map((p) => p.name);
       const transactionData = {
         email: userDetails.email,
@@ -94,15 +93,12 @@ export default function SuccessPage() {
       };
 
       try {
-        // Call the API endpoint to add the transaction record to the user's model
         await axios.post("/api/add-transaction", transactionData);
       } catch (error) {
         console.error("Error adding transaction record:", error);
       }
-      
-      // Optionally, if the user did NOT come from a valid payment flow, you may clear these values.
-      // For valid flows (from PhonePe or /api/status/[id]), you might want to leave them.
-      // For example, if the URL does NOT contain a valid PhonePe token, you can clear them:
+
+      // Optionally, if not coming from a valid payment URL, clear sessionStorage fields.
       if (typeof window !== "undefined") {
         const currentUrl = window.location.href;
         if (!currentUrl.includes("sltTkn=") && !currentUrl.includes("/api/status/")) {
@@ -147,7 +143,6 @@ export default function SuccessPage() {
     });
 
     doc.text(`Total: ₹${totalAmount}`, 14, yPosition + 10);
-
     doc.save("invoice.pdf");
   };
 
@@ -186,7 +181,6 @@ export default function SuccessPage() {
     });
 
     doc.text(`Total: ₹${totalAmount}`, 14, yPosition + 10);
-
     doc.autoPrint();
     window.open(doc.output("bloburl"), "_blank");
 
@@ -216,10 +210,10 @@ export default function SuccessPage() {
         <div className="bg-purple-100 p-4 rounded-md mb-4">
           <div className="text-center">
             <p className="text-green-600 font-semibold">
-              Earned Coins: ₹{walletEarned} ({walletEarned} coins)
+              Earned Detergent(gm): {walletEarned}gram ({walletEarned} detergent)
             </p>
             <p className="text-sm text-gray-600 mt-1">
-              (10% of your purchase amount added to wallet)
+              (For every ₹50 spent, you earn 1 gram of detergent)
             </p>
           </div>
         </div>

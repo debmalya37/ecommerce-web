@@ -131,11 +131,11 @@ export default function PaymentPage() {
           {/* Wallet Section */}
           <div className="bg-gray-100 p-4 rounded-md">
             <div className="flex justify-between items-center mb-2">
-              <span>Wallet Balance:</span>
-              <span className="font-bold">₹{walletBalance}</span>
+              {/* <span>Wallet Balance:</span>
+              <span className="font-bold">₹{walletBalance}</span> */}
             </div>
             <div className="flex items-center gap-2">
-              <input
+              {/* <input
                 type="number"
                 value={walletUsed}
                 onChange={handleWalletChange}
@@ -143,13 +143,13 @@ export default function PaymentPage() {
                 placeholder="Amount to use"
                 min="0"
                 max={Math.min(walletBalance, totalAmount)}
-              />
-              <button
+              /> */}
+              {/* <button
                 onClick={() => setWalletUsed(Math.min(walletBalance, totalAmount))}
                 className="text-sm bg-blue-100 text-blue-600 px-2 py-1 rounded-md hover:bg-blue-200"
               >
                 Use Max
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -164,10 +164,10 @@ export default function PaymentPage() {
               <span>Original Total:</span>
               <span>₹{totalAmount}</span>
             </div>
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span>Wallet Used:</span>
               <span>- ₹{walletUsed}</span>
-            </div>
+            </div> */}
             <div className="flex justify-between">
               <span>Delivery Charge:</span>
               <span>₹{deliveryCharge}</span>

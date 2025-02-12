@@ -80,13 +80,13 @@ export default function Profile() {
           <p className="bg-gray-100 p-3 rounded-md">{user?.email}</p>
         </div>
 
-        <div>
+        {/* <div>
           <label className="block text-gray-700 font-semibold">Wallet Balance</label>
           <p className="bg-gray-100 p-3 rounded-md">₹{user?.wallet?.balance}</p>
-        </div>
+        </div> */}
 
         <div>
-          <label className="block text-gray-700 font-semibold">Wallet Coins</label>
+          <label className="block text-gray-700 font-semibold">Earned Detergent</label>
           <p className="bg-gray-100 p-3 rounded-md">{user?.wallet?.coins}</p>
         </div>
 
