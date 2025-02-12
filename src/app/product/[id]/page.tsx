@@ -154,7 +154,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
             {product.stock === 0 ? (
               <p className="text-red-600 font-bold text-lg">Out of Stock</p>
             ) : (
-              <p className="text-green-600 font-semibold">In Stock: {product.stock}</p>
+              <p className="text-green-600 font-semibold"></p>
             )}
 
             {/* Quantity Selector */}
