@@ -146,17 +146,6 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
           {/* Product Details */}
           <div className="space-y-6">
             <h1 className="text-3xl font-semibold text-gray-800">{product.name}</h1>
-            <p className="text-gray-600">{product.description}</p>
-            <p className="text-2xl font-bold text-gray-900">₹{product.price}</p>
-            <p className="text-sm text-gray-500 line-through">₹{product.originalPrice}</p>
-
-            {/* Stock Status */}
-            {product.stock === 0 ? (
-              <p className="text-red-600 font-bold text-lg">Out of Stock</p>
-            ) : (
-              <p className="text-green-600 font-semibold"></p>
-            )}
-
             {/* Quantity Selector */}
             {product.stock > 0 && (
               <div className="flex items-center space-x-4">
@@ -185,6 +174,18 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                 </div>
               </div>
             )}
+            <p className="text-gray-600">{product.description}</p>
+            <p className="text-2xl font-bold text-gray-900">₹{product.price}</p>
+            <p className="text-sm text-gray-500 line-through">₹{product.originalPrice}</p>
+
+            {/* Stock Status */}
+            {product.stock === 0 ? (
+              <p className="text-red-600 font-bold text-lg">Out of Stock</p>
+            ) : (
+              <p className="text-green-600 font-semibold"></p>
+            )}
+
+            
 
             {/* Action Buttons */}
             {/* Fixed Action Buttons for Mobile */}
