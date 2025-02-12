@@ -174,9 +174,35 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                 </div>
               </div>
             )}
+            <div className="flex items-center">
+            <div className="bg-purple-600 text-white text-sm font-bold px-3 py-2 rounded-md">
+              Hot Deal
+            </div>
+            </div>
+            <div className="flex items-center space-x-2">
+  {/* Hot Deal Badge */}
+  
+    
+  {/* Discount Percentage */}
+  <span className="text-xl font-bold text-green-700">
+    ↓{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+  </span>
+
+  {/* Original Price (Strikethrough) */}
+  <span className="text-xl text-gray-500 line-through">
+    ₹{product.originalPrice}
+  </span>
+
+  {/* Final Price */}
+  <span className="text-xl font-bold text-gray-900">
+    ₹{product.price}
+  </span>
+</div>
+
+            
+            
+            
             <p className="text-gray-600">{product.description}</p>
-            <p className="text-2xl font-bold text-gray-900">₹{product.price}</p>
-            <p className="text-sm text-gray-500 line-through">₹{product.originalPrice}</p>
 
             {/* Stock Status */}
             {product.stock === 0 ? (
