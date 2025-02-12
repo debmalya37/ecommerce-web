@@ -14,11 +14,11 @@ export default function ProductCard({ id, name, description, price, originalPric
   return (
     <div className="border p-4 rounded-lg shadow-lg hover:shadow-xl transition bg-white relative">
       {/* Product Image */}
-      <div className="h-80 w-full overflow-hidden rounded-md mb-4 bg-gray-100 flex items-center justify-center">
+      <div className="w-full overflow-hidden rounded-md mb-4 bg-gray-100 flex items-center justify-center h-40 sm:h-56 md:h-80">
         <img 
           src={imageUrl} 
           alt={name} 
-          className="h-full w-full object-contain"
+          className="w-full h-full object-contain"
           onError={(e) => (e.currentTarget.src = "/images/placeholder.jpg")}
         />
       </div>
@@ -34,10 +34,8 @@ export default function ProductCard({ id, name, description, price, originalPric
       </div>
 
       {/* Stock Status */}
-      {stock === 0 ? (
+      {stock === 0 && (
         <p className="text-red-600 font-bold absolute top-2 right-2">Out of Stock</p>
-      ) : (
-        <p className="text-green-600 font-semibold">In Stock: {stock}</p>
       )}
 
       {/* View Product Button */}

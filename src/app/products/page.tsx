@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ProductCard from "@/components/ProductCard";
+import { useSearchParams } from "next/navigation";
 
 export default function ProductPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -9,6 +10,16 @@ export default function ProductPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
+  const searchParams = useSearchParams();
+
+
+  // On mount, set the selected category from URL (if exists)
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    if (cat) {
+      setSelectedCategory(cat);
+    }
+  }, [searchParams]);
 
   // Fetch products and categories when component mounts
   useEffect(() => {
@@ -16,20 +27,19 @@ export default function ProductPage() {
     fetchCategories();
   }, []);
 
-    // Update filteredProducts whenever products, selectedCategory, or searchTerm changes
-    useEffect(() => {
-      let tempProducts = products;
-  
-      // Filter by category if a specific category is selected (not "All")
-      if (selectedCategory !== "All") {
-        tempProducts = tempProducts.filter((product) => {
-          // Replace spaces with hyphen and convert to lowercase
-          const productCat = product.category.toLowerCase().replace(/\s+/g, '-');
-          const selectedCat = selectedCategory.toLowerCase().replace(/\s+/g, '-');
-          return productCat === selectedCat;
-        });
-      }
-  
+     // Update filteredProducts whenever products, selectedCategory, or searchTerm changes
+  useEffect(() => {
+    let tempProducts = products;
+
+    // Filter by category if a specific category is selected (not "All")
+    if (selectedCategory !== "All") {
+      tempProducts = tempProducts.filter((product) => {
+        // Replace spaces with hyphen and convert to lowercase
+        const productCat = product.category.toLowerCase().replace(/\s+/g, '-');
+        const selectedCat = selectedCategory.toLowerCase().replace(/\s+/g, '-');
+        return productCat === selectedCat;
+      });
+    }
 
     // Filter by search term on product name or description (case-insensitive)
     if (searchTerm.trim() !== "") {
@@ -110,7 +120,7 @@ export default function ProductPage() {
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {filteredProducts.map((product: any) => (
           <ProductCard
             key={product._id}
