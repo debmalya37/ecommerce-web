@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+import Loader from "@/components/Loader";
 
 // Client-side only component
 const ProductList = () => {
@@ -130,7 +131,7 @@ const ProductList = () => {
 // Main page component
 export default function ProductPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto p-6">Loading...</div>}>
+    <Suspense fallback={<div className="container mx-auto p-6"> <Loader /></div>}>
       <ProductList />
     </Suspense>
   );

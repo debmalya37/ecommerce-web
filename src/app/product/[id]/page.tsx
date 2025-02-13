@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react"; // Import useSession
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import Loader from "@/components/Loader";
 
 export default function ProductDetails({ params }: { params: { id: string } }) {
   const { data: session } = useSession(); // Get session data
@@ -44,7 +45,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
 
 
 
-  if (loading) return <p className="text-center mt-10 text-gray-600">Loading...</p>;
+  if (loading) return <Loader />;
   if (!product) return <p className="text-center mt-10 text-red-600">Product not found</p>;
 
   const handleAddToCart = () => {

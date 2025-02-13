@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Loader from "@/components/Loader";
 
 export default function Profile() {
   const [user, setUser] = useState<any>(null);
@@ -62,7 +63,7 @@ export default function Profile() {
     }
   };
 
-  if (loading) return <p className="text-center text-gray-500">Loading...</p>;
+  if (loading) return <Loader />;
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
   return (

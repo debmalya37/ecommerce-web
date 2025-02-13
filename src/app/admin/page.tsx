@@ -4,6 +4,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Loader from "@/components/Loader"; // Import your Loader component
 
 export default function AdminPage() {
   const router = useRouter();
@@ -11,13 +12,13 @@ export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [newCategory, setNewCategory] = useState("");
+  const [loadingData, setLoadingData] = useState(true);
 
   // Get the email from session, if available.
   const userEmail = session?.user?.email || "";
 
   // Check if the current session user is allowed to access the admin page.
   useEffect(() => {
-    // Wait until the session is loaded
     if (status === "loading") return;
 
     const allowedEmails = [
@@ -26,21 +27,29 @@ export default function AdminPage() {
       "tech@gmail.com",
     ];
 
-    // Do a case-insensitive comparison
+    // Case-insensitive comparison.
     const isAllowed = allowedEmails.some(
       (email) => email.toLowerCase() === userEmail.toLowerCase()
     );
 
     if (!userEmail || !isAllowed) {
-      // If the user is not allowed, redirect to the homepage.
       router.push("/");
     }
   }, [router, userEmail, status]);
 
-  // Fetch users and categories on mount
+  // Fetch users and categories on mount.
   useEffect(() => {
-    fetchUsers();
-    fetchCategories();
+    const fetchData = async () => {
+      try {
+        await Promise.all([fetchUsers(), fetchCategories()]);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const fetchUsers = async () => {
@@ -73,7 +82,6 @@ export default function AdminPage() {
     }
   };
 
-  // Delete a category by id
   const handleDeleteCategory = async (categoryId: string) => {
     try {
       await axios.delete(`/api/categories/${categoryId}`);
@@ -83,7 +91,7 @@ export default function AdminPage() {
     }
   };
 
-  // Derive recentTransactions from the users array
+  // Derive recentTransactions from the users array.
   const recentTransactions = users
     .flatMap((user: any) => {
       if (!user.transactions) return [];
@@ -101,6 +109,10 @@ export default function AdminPage() {
       (a: { date: string | number | Date }, b: { date: string | number | Date }) =>
         new Date(b.date).getTime() - new Date(a.date).getTime()
     );
+
+  if (loadingData) {
+    return <Loader />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -126,35 +138,25 @@ export default function AdminPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Address
                   </th>
+                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Wallet Detergent (grams) ( reserved for future use )
+                  </th> */}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Wallet Balance
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Coins
+                  Detergent (grams) 
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {users.map((user) => (
                   <tr key={user._id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.fullName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.email}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.phone}
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{user.phone}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {user.address}, {user.state}, {user.pincode}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      ₹{user.wallet?.balance || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.wallet?.coins || 0}
-                    </td>
+                    {/* <td className="px-6 py-4 whitespace-nowrap">₹{user.wallet?.balance || 0}</td> */}
+                    <td className="px-6 py-4 whitespace-nowrap">{user.wallet?.coins || 0}</td>
                   </tr>
                 ))}
               </tbody>
