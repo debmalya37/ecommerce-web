@@ -23,6 +23,9 @@
     "short_name": "HIURI ECOMMERCE",
     "start_url": "/",
     "scope": "/",
-    "description": "ecommerce app for hiuri enterprise"
+    "description": "ecommerce app for hiuri enterprise",
+    "display_override": [
+      "window-controls-overlay",
+      "standalone"
+    ]
   }
-  

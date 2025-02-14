@@ -1,8 +1,8 @@
 // next.config.js
 const withPWA = require('next-pwa')({
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
+  dest: "public",
+  register: true,
+  skipWaiting: true,
     runtimeCaching: [
       {
         urlPattern: /^https?.*/,
