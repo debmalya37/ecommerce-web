@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShoppingCart } from "@fortawesome/free-solid-svg-icons";
 
+
 export default function Navbar() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +14,9 @@ export default function Navbar() {
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
+
+
+
 
   // Load cart count from localStorage (summing the quantity of each item)
   useEffect(() => {
@@ -27,6 +31,7 @@ export default function Navbar() {
 
     loadCartCount();
   }, []);
+
 
   return (
     <nav className="bg-blue-900 text-white shadow-md">

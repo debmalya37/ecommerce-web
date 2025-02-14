@@ -39,11 +39,13 @@ export default function CartPage() {
     // Recalculate total
     const updatedTotal = updatedCart.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
     setTotal(updatedTotal);
+    // Refresh the window to update the view
+    window.location.reload();
   };
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
-      <div className="max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6">
+      <div className=" cart max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6">
         <h2 className="text-2xl font-bold text-center mb-6">Shopping Cart</h2>
         {cart.length === 0 ? (
           <p className="text-center text-gray-600">Your cart is empty</p>
@@ -73,7 +75,7 @@ export default function CartPage() {
           <p className="text-xl font-bold">Total: ₹{total.toFixed(2)}</p>
           <button
             onClick={handleCheckout}
-            className="mt-4 sm:mt-0 bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 transition"
+            className="mt-4 sm:mt-0 bg-blue-900 text-white px-6 py-3 rounded-md hover:bg-green-600 transition"
           >
             Checkout
           </button>

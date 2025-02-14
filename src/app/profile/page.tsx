@@ -87,7 +87,7 @@ export default function Profile() {
         </div> */}
 
         <div>
-          <label className="block text-gray-700 font-semibold">Earned Detergent</label>
+          <label className="block text-gray-700 font-semibold">Earned Detergent in grams</label>
           <p className="bg-gray-100 p-3 rounded-md">{user?.wallet?.coins}</p>
         </div>
 

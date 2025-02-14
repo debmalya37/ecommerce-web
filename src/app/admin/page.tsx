@@ -82,6 +82,7 @@ export default function AdminPage() {
     }
   };
 
+  // Delete a category by id
   const handleDeleteCategory = async (categoryId: string) => {
     try {
       await axios.delete(`/api/categories/${categoryId}`);
@@ -133,16 +134,16 @@ export default function AdminPage() {
                     Email
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Password
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Phone
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Address
                   </th>
-                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Wallet Detergent (grams) ( reserved for future use )
-                  </th> */}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Detergent (grams) 
+                    Detergent (grams)
                   </th>
                 </tr>
               </thead>
@@ -151,12 +152,14 @@ export default function AdminPage() {
                   <tr key={user._id}>
                     <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{user.password}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.phone}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {user.address}, {user.state}, {user.pincode}
                     </td>
-                    {/* <td className="px-6 py-4 whitespace-nowrap">₹{user.wallet?.balance || 0}</td> */}
-                    <td className="px-6 py-4 whitespace-nowrap">{user.wallet?.coins || 0}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.wallet?.coins || 0}
+                    </td>
                   </tr>
                 ))}
               </tbody>

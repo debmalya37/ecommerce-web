@@ -65,7 +65,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     cartItems.push(newProduct);
     localStorage.setItem("cart", JSON.stringify(cartItems));
     setAlreadyInCart(true); // Update state so button shows as disabled
-    
+    window.location.reload();
   };
 
 
@@ -190,6 +190,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     ₹{product.price}
   </span>
   {/* Original Price (Strikethrough) */}
+  <span className="text-xl font-bold text-gray-900">MRP </span>
   <span className="text-xl text-gray-500 line-through">
     ₹{product.originalPrice}
   </span>

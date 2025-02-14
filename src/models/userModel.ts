@@ -1,3 +1,4 @@
+// src/models/userModel.ts
 import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from "bcryptjs";
 
@@ -7,7 +8,6 @@ export interface ITransaction {
   products: string[]; // or a more complex object if needed
   date: Date;
 }
-
 export interface IUser extends Document {
   fullName: string;
   email: string;
@@ -25,7 +25,9 @@ export interface IUser extends Document {
     productId: mongoose.Schema.Types.ObjectId;
     quantity: number;
   }[];
-  transactions: ITransaction[];  // New field for transaction history
+  transactions: ITransaction[];
+  otp?: string;         // New field to store OTP
+  otpExpires?: Date;    // New field to store OTP expiration time
   comparePassword(password: string): Promise<boolean>;
 }
 
@@ -38,10 +40,7 @@ const UserSchema = new Schema<IUser>({
   state: { type: String, required: true },
   pincode: { type: String, required: true },
   address: { type: String, required: true },
-  wallet: {
-    balance: { type: Number, default: 0 },
-    coins: { type: Number, default: 0 },
-  },
+  wallet: { balance: { type: Number, default: 0 }, coins: { type: Number, default: 0 } },
   cart: [
     {
       productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
@@ -56,9 +55,11 @@ const UserSchema = new Schema<IUser>({
       date: { type: Date, default: Date.now },
     },
   ],
+  otp: { type: String },
+  otpExpires: { type: Date },
 });
 
-// Hash password before saving
+// Pre-save hook to hash password...
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
@@ -66,7 +67,6 @@ UserSchema.pre("save", async function (next) {
   next();
 });
 
-// Compare password
 UserSchema.methods.comparePassword = async function (password: string) {
   return await bcrypt.compare(password, this.password);
 };

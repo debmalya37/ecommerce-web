@@ -7,7 +7,18 @@ import Link from "next/link";
 export default function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // Toggle for password visibility
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Forgot password modal states
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStage, setForgotStage] = useState<"request" | "reset">("request");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [forgotError, setForgotError] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const router = useRouter();
 
@@ -18,11 +29,13 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     const result = await signIn("credentials", {
       ...formData,
       redirect: false,
     });
+    setLoading(false);
 
     if (result?.error) {
       setError(result.error);
@@ -31,10 +44,10 @@ export default function LoginPage() {
     }
   };
 
-  // Eye icon for open/closed animation
+  // Toggle password visibility with an eye icon animation.
   const EyeIcon = () => {
     return showPassword ? (
-      // Eye Open
+      // Open Eye Icon
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
@@ -55,7 +68,7 @@ export default function LoginPage() {
         />
       </svg>
     ) : (
-      // Eye Closed
+      // Closed Eye Icon
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
@@ -78,21 +91,72 @@ export default function LoginPage() {
     );
   };
 
+  // Handle Forgot Password Flow
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError("");
+    if (forgotStage === "request") {
+      // Request OTP
+      setForgotLoading(true);
+      try {
+        const response = await fetch("/api/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: forgotEmail }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          setForgotStage("reset");
+        } else {
+          setForgotError(data.error || "Failed to send OTP");
+        }
+      } catch (err: any) {
+        setForgotError(err.message || "Error sending OTP");
+      } finally {
+        setForgotLoading(false);
+      }
+    } else {
+      // Reset Password
+      if (newPassword !== confirmNewPassword) {
+        setForgotError("Passwords do not match");
+        return;
+      }
+      setForgotLoading(true);
+      try {
+        const response = await fetch("/api/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: forgotEmail,
+            otp,
+            newPassword,
+            confirmPassword: confirmNewPassword,
+          }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          setShowForgotModal(false);
+          router.push("/login");
+        } else {
+          setForgotError(data.error || "Failed to reset password");
+        }
+      } catch (err: any) {
+        setForgotError(err.message || "Error resetting password");
+      } finally {
+        setForgotLoading(false);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0f0c29] via-[#302b63] to-[#24243e]">
-      {/* Outer Card Container */}
+      {/* Main Login Card */}
       <div className="relative w-[350px] h-[500px] bg-[url('https://doc-08-2c-docs.googleusercontent.com/docs/securesc/.../1Sx0jhdpEpnNIydS4rnN4kHSJtU1EyWka?e=view&authuser=0')] bg-cover bg-center rounded-[10px] shadow-[5px_20px_50px_#000] overflow-hidden">
-        {/* Dark Overlay (optional) */}
         <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-
-        {/* Login Form Container */}
         <div className="relative w-full h-full flex flex-col items-center justify-center p-6 z-10">
           <h2 className="text-3xl font-bold text-white mb-6">Login</h2>
-
           {error && <p className="text-red-500 text-center">{error}</p>}
-
           <form onSubmit={handleSubmit} className="flex flex-col items-center w-full">
-            {/* Email Input */}
             <input
               type="email"
               name="email"
@@ -101,8 +165,6 @@ export default function LoginPage() {
               required
               className="w-[80%] mb-4 p-3 rounded-md border-none outline-none bg-[#e0dede] text-gray-700"
             />
-
-            {/* Password Input + Toggle */}
             <div className="w-[80%] mb-4 relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -112,33 +174,109 @@ export default function LoginPage() {
                 required
                 className="w-full p-3 rounded-md border-none outline-none bg-[#e0dede] text-gray-700"
               />
-              {/* Eye Toggle Icon */}
               <button
-              title="Toggle Password Visibility"
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-3 text-gray-600"
+                title="Toggle Password Visibility"
               >
                 <EyeIcon />
               </button>
             </div>
-
             <button
               type="submit"
               className="w-[60%] bg-[#573b8a] text-white py-3 rounded-md font-bold hover:bg-[#6d44b8] transition"
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </button>
           </form>
-
-          <p className="text-white mt-6">
+          <p className="text-white mt-6 justify-center text-center">
+            <span
+              className="cursor-pointer text-yellow-300 hover:underline"
+              onClick={() => setShowForgotModal(true)}
+            >
+              Forgot Password?
+            </span>
+            <br />
+            <span>
             New User?{" "}
             <Link href="/register" className="text-yellow-300 hover:underline font-semibold">
               Create an account
             </Link>
+            </span>
           </p>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] sm:w-[400px]">
+            <h3 className="text-2xl font-bold mb-4 text-gray-800">
+              {forgotStage === "request" ? "Reset Password" : "Enter OTP & New Password"}
+            </h3>
+            {forgotError && <p className="text-red-500 mb-4">{forgotError}</p>}
+            <form onSubmit={handleForgotSubmit} className="space-y-4">
+              {forgotStage === "request" && (
+                <>
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    required
+                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-600 text-white p-3 rounded-md font-semibold hover:bg-blue-700 transition"
+                  >
+                    {forgotLoading ? "Sending OTP..." : "Send OTP"}
+                  </button>
+                </>
+              )}
+
+              {forgotStage === "reset" && (
+                <>
+                  <input
+                    type="text"
+                    placeholder="Enter OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    required
+                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="password"
+                    placeholder="New Password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <input
+                    type="password"
+                    placeholder="Confirm New Password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    required
+                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full bg-green-600 text-white p-3 rounded-md font-semibold hover:bg-green-700 transition"
+                  >
+                    {forgotLoading ? "Updating Password..." : "Update Password"}
+                  </button>
+                </>
+              )}
+            </form>
+            <button onClick={() => setShowForgotModal(false)} className="mt-4 w-full text-center text-blue-600 hover:underline">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

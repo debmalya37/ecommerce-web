@@ -6,7 +6,7 @@ import User from "@/models/userModel";
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();
-    const users = await User.find({}).select("-password");
+    const users = await User.find({}).lean();
     return NextResponse.json(users);
   } catch (error: any) {
     return NextResponse.json(

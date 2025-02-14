@@ -1,13 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import Image from "next/image";
 import heroImg from "../../public/images/hero.jpg";
-
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 export default function HomePage() {
   const [categories, setCategories] = useState<any[]>([]);
+  const { data: session } = useSession(); 
+  const router = useRouter();
+
+  const userEmail = session?.user?.email || "";
+  if (!userEmail) {
+    // If the user is not allowed, redirect to the homepage.
+    router.push("/login");
+  }
+  
 
   // Fetch categories from your API
   useEffect(() => {

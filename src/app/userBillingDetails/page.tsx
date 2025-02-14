@@ -79,9 +79,9 @@ export default function UserBillingDetailsPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-8 max-w-lg">
+    <div className="container mx-auto p-6 space-y-8 max-w-lg h-[100vh]">
       <h2 className="text-2xl font-semibold text-gray-800">Billing Details</h2>
-      <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+      <form className="space-y-2" onSubmit={(e) => e.preventDefault()}>
         <div>
           <label htmlFor="fullName" className="block text-lg text-gray-700">Full Name</label>
           <input
