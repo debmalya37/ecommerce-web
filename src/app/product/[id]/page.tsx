@@ -184,20 +184,20 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   {/* Hot Deal Badge */}
   
     
-  {/* Discount Percentage */}
-  <span className="text-xl font-bold text-green-700">
-    ↓{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
-  </span>
-
-  {/* Original Price (Strikethrough) */}
-  <span className="text-xl text-gray-500 line-through">
-    ₹{product.originalPrice}
-  </span>
 
   {/* Final Price */}
   <span className="text-xl font-bold text-gray-900">
     ₹{product.price}
   </span>
+  {/* Original Price (Strikethrough) */}
+  <span className="text-xl text-gray-500 line-through">
+    ₹{product.originalPrice}
+  </span>
+  {/* Discount Percentage */}
+  <span className="text-xl font-bold text-green-700">
+    ↓{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+  </span>
+
 </div>
 
             

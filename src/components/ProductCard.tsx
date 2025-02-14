@@ -4,16 +4,16 @@ import Link from "next/link";
 interface ProductCardProps {
   id: string;
   name: string;
-  description: string;
+  // description: string;
   price: number;
   originalPrice: number;
   imageUrl: string;
   stock: number;
 }
 
-export default function ProductCard({ id, name, description, price, originalPrice, imageUrl, stock }: ProductCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const isLongDescription = description.length > 100;
+export default function ProductCard({ id, name, price, originalPrice, imageUrl, stock }: ProductCardProps) {
+  // const [isExpanded, setIsExpanded] = useState(false);
+  // const isLongDescription = description.length > 100;
 
   return (
     <div className="border p-4 rounded-lg shadow-lg hover:shadow-xl transition bg-white relative flex flex-col min-h-[450px] sm:min-h-[500px]">
@@ -31,7 +31,7 @@ export default function ProductCard({ id, name, description, price, originalPric
       <h2 className="font-bold text-lg text-gray-800 mt-2">{name}</h2>
 
       {/* Expandable Description */}
-      <p className="text-gray-600 text-sm">
+      {/* <p className="text-gray-600 text-sm">
         {isExpanded ? description : `${description.substring(0, 100)}...`}
       </p>
 
@@ -42,7 +42,7 @@ export default function ProductCard({ id, name, description, price, originalPric
         >
           {isExpanded ? "Read Less" : "Read More"}
         </button>
-      )}
+      )} */}
 
       {/* Price Section */}
       <div className="mt-auto">
