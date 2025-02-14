@@ -38,7 +38,7 @@ export default function Navbar() {
       <div className="container mx-auto flex justify-between items-center p-4">
         {/* Logo */}
         <Link href="/">
-          <span className="text-xl font-bold">Hiuri</span>
+          <span className="text-xl font-bold">HIURI</span>
         </Link>
 
         {/* Desktop Menu */}
