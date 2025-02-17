@@ -12,11 +12,11 @@ export default function HomePage() {
   const { data: session } = useSession(); 
   const router = useRouter();
 
-  const userEmail = session?.user?.email || "";
-  if (!userEmail) {
-    // If the user is not allowed, redirect to the homepage.
-    router.push("/login");
-  }
+  // const userEmail = session?.user?.email || "";
+  // if (!userEmail) {
+  //   // If the user is not allowed, redirect to the homepage.
+  //   router.push("/login");
+  // }
   
 
   // Fetch categories from your API
@@ -69,25 +69,40 @@ export default function HomePage() {
       </header>
 
        {/* Categories Section */}
-       <section className="py-8 bg-blue-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-            Shop by Category
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {categories.map((cat) => (
-              <Link
-                key={cat._id}
-                href={`/products?category=${encodeURIComponent(cat.name)}`}
-              >
-                <span className="block bg-white rounded-lg shadow p-4 text-center hover:shadow-lg transition">
-                  <p className="text-gray-800 font-semibold">{cat.name}</p>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+<section className="py-8 bg-blue-50">
+  <div className="container mx-auto px-4">
+    <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+      Shop by Category
+    </h2>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      {categories.map((cat) => (
+        <Link
+          key={cat._id}
+          href={`/products?category=${encodeURIComponent(cat.name)}`}
+        >
+          <span className="
+            block 
+            bg-white 
+            rounded-lg 
+            shadow 
+            p-4 
+            text-center 
+            hover:shadow-lg 
+            transition 
+            min-h-[80px]    /* Ensures a minimum height for the card */
+            flex 
+            items-center 
+            justify-center  /* Centers text vertically/horizontally */
+          ">
+            <p className="text-gray-800 font-semibold break-words max-w-full">
+              {cat.name}
+            </p>
+          </span>
+        </Link>
+      ))}
+    </div>
+  </div>
+</section>
 
       {/* Call to Action Section
       <section className="bg-blue-600 text-white py-12">
