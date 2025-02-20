@@ -207,16 +207,17 @@ export default function SuccessPage() {
           </p>
         )}
         {/* Wallet summary */}
-        <div className="bg-purple-100 p-4 rounded-md mb-4">
-          <div className="text-center">
-            <p className="text-green-600 font-semibold">
-              Earned Detergent(gm): {walletEarned}gram ({walletEarned} detergent)
-            </p>
-            <p className="text-sm text-gray-600 mt-1">
-              (For every ₹50 spent, you earn 1 gram of detergent)
-            </p>
-          </div>
-        </div>
+<div className="bg-purple-100 p-4 rounded-md mb-4">
+  <div className="text-center">
+    <p className="text-green-600 font-semibold">
+      Earned Detergent (kg): {(walletEarned / 1000).toFixed(3)} kg ({walletEarned} gm)
+    </p>
+    <p className="text-sm text-gray-600 mt-1">
+      (For every ₹50 spent, you earn 1 gram of detergent)
+    </p>
+  </div>
+</div>
+
 
         {/* User and purchase details */}
         <div className="space-y-4" id="invoice-content">

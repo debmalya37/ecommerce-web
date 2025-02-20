@@ -86,10 +86,12 @@ export default function Profile() {
           <p className="bg-gray-100 p-3 rounded-md">₹{user?.wallet?.balance}</p>
         </div> */}
 
-        <div>
-          <label className="block text-gray-700 font-semibold">Earned Detergent in grams</label>
-          <p className="bg-gray-100 p-3 rounded-md">{user?.wallet?.coins}</p>
-        </div>
+<div>
+  <label className="block text-gray-700 font-semibold">Earned Detergent (kg)</label>
+  <p className="bg-gray-100 p-3 rounded-md">
+    {(user?.wallet?.coins / 1000).toFixed(3)} kg
+  </p>
+</div>
 
         {/** Editable Fields */}
         {isEditing ? (
