@@ -151,7 +151,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer
       <footer className="bg-blue-700 text-white py-6">
         <div className="container mx-auto px-6 text-center">
           <p>&copy; 2025 HIURI ENTERPRISES. All rights reserved.</p>
@@ -180,7 +180,7 @@ export default function HomePage() {
             Refund Policy
           </Link>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 }
