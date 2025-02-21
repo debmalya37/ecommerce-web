@@ -16,24 +16,20 @@ export default function AdminPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [newNotificationTitle, setNewNotificationTitle] = useState("");
   const [newNotificationMessage, setNewNotificationMessage] = useState("");
-
   // Get the email from session, if available.
   const userEmail = session?.user?.email || "";
 
   // Check if the current session user is allowed to access the admin page.
   useEffect(() => {
     if (status === "loading") return;
-
     const allowedEmails = [
       "debmalyasen37@gmail.com",
       "sunilchahal1995a@gmail.com",
       "tech@gmail.com",
     ];
-
     const isAllowed = allowedEmails.some(
       (email) => email.toLowerCase() === userEmail.toLowerCase()
     );
-
     if (!userEmail || !isAllowed) {
       router.push("/");
     }
@@ -92,6 +88,7 @@ export default function AdminPage() {
     }
   };
 
+  // Delete a category by id
   const handleDeleteCategory = async (categoryId: string) => {
     try {
       await axios.delete(`/api/categories/${categoryId}`);
@@ -101,8 +98,8 @@ export default function AdminPage() {
     }
   };
 
-  // Handle adding a new notification.
-  const handleAddNotification = async (e: React.FormEvent) => {
+   // Handle adding a new notification.
+   const handleAddNotification = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNotificationTitle.trim() || !newNotificationMessage.trim()) return;
     try {
@@ -127,6 +124,27 @@ export default function AdminPage() {
       console.error("Error deleting notification:", error);
     }
   };
+  
+  // Handle resetting wallet coins for a user.
+  const handleResetCoins = async (email: string) => {
+    try {
+      const response = await axios.post("/api/reset-wallet-coins", { email });
+      if (response.data.success) {
+        // Update the user's wallet coins in local state.
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.email.toLowerCase() === email.toLowerCase()
+              ? { ...user, wallet: { ...user.wallet, coins: 0 } }
+              : user
+          )
+        );
+      } else {
+        console.error("Reset failed:", response.data.error);
+      }
+    } catch (error) {
+      console.error("Error resetting wallet coins:", error);
+    }
+  };
 
   // Derive recentTransactions from the users array.
   const recentTransactions = users
@@ -135,7 +153,7 @@ export default function AdminPage() {
       return user.transactions.map((txn: any) => ({
         transactionId: txn.transactionId,
         amount: txn.amount,
-        products: txn.products,
+        products: txn.products, // Expecting an array of product names (or IDs)
         date: txn.date,
         fullName: user.fullName,
         phone: user.phone,
@@ -167,6 +185,7 @@ export default function AdminPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detergent (grams)</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reset Coins</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -176,8 +195,18 @@ export default function AdminPage() {
                     <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.password}</td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.phone}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.address}, {user.state}, {user.pincode}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.address}, {user.state}, {user.pincode}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">{user.wallet?.coins || 0}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handleResetCoins(user.email)}
+                        className="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700"
+                      >
+                        Reset
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -186,7 +215,10 @@ export default function AdminPage() {
         </section>
 
         <div>
-          <Link href="/admin/products" className="ml-4 hover:underline p-4 bg-blue-800 text-white rounded-md">
+          <Link
+            href="/admin/products"
+            className="ml-4 hover:underline p-4 bg-blue-800 text-white rounded-md"
+          >
             Add Products/See Products
           </Link>
         </div>
@@ -206,11 +238,18 @@ export default function AdminPage() {
               Add Category
             </button>
           </form>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {categories.map((category) => (
-              <div key={category._id} className="bg-gray-50 p-4 rounded-md flex items-center justify-between">
+              <div
+                key={category._id}
+                className="bg-gray-50 p-4 rounded-md flex items-center justify-between"
+              >
                 <span className="font-medium">{category.name}</span>
-                <button onClick={() => handleDeleteCategory(category._id)} className="bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600">
+                <button
+                  onClick={() => handleDeleteCategory(category._id)}
+                  className="bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600"
+                >
                   Delete
                 </button>
               </div>
@@ -267,9 +306,7 @@ export default function AdminPage() {
                   ))
                 ) : (
                   <tr>
-                    <td className="px-6 py-4 whitespace-nowrap" colSpan={4}>
-                      No Announcement.
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap" colSpan={4}>No Announcement.</td>
                   </tr>
                 )}
               </tbody>
@@ -302,7 +339,9 @@ export default function AdminPage() {
                       <td className="px-6 py-4 whitespace-nowrap">₹{txn.amount}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{new Date(txn.date).toLocaleString()}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {Array.isArray(txn.products) ? txn.products.join(", ") : txn.products}
+                        {Array.isArray(txn.products)
+                          ? txn.products.join(", ")
+                          : txn.products}
                       </td>
                     </tr>
                   ))

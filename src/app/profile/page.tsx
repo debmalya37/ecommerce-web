@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react";
@@ -8,6 +7,7 @@ import Loader from "@/components/Loader";
 
 export default function Profile() {
   const [user, setUser] = useState<any>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const router = useRouter();
   const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
@@ -22,9 +22,10 @@ export default function Profile() {
   });
   const userEmail = session?.user?.email || "";
   if (!userEmail) {
-    // If the user is not allowed, redirect to the homepage.
     router.push("/login");
   }
+
+  // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -44,11 +45,25 @@ export default function Profile() {
         setLoading(false);
       }
     };
-
     fetchUser();
+  }, [router]);
+
+  // Fetch notifications for delivery information
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get("/api/notifications");
+        setNotifications(response.data);
+      } catch (err) {
+        console.error("Failed to fetch notifications", err);
+      }
+    };
+    fetchNotifications();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -66,6 +81,19 @@ export default function Profile() {
   if (loading) return <Loader />;
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
+  // Compute detergent earnings
+  const previousEarningsInGrams = user.walletHistory
+    ? user.walletHistory.reduce(
+        (acc: number, record: { year: number; coins: number }) => acc + record.coins,
+        0
+      )
+    : 0;
+  const currentYearEarningsInGrams = user.wallet?.coins || 0;
+  const totalEarningsKg = (
+    (previousEarningsInGrams + currentYearEarningsInGrams) /
+    1000
+  ).toFixed(3);
+
   return (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
       <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">My Profile</h1>
@@ -81,25 +109,21 @@ export default function Profile() {
           <p className="bg-gray-100 p-3 rounded-md">{user?.email}</p>
         </div>
 
-        {/* <div>
-          <label className="block text-gray-700 font-semibold">Wallet Balance</label>
-          <p className="bg-gray-100 p-3 rounded-md">₹{user?.wallet?.balance}</p>
-        </div> */}
+        {/* Earned Detergent Section (displayed in kg) */}
+        <div>
+          <label className="block text-gray-700 font-semibold">Earned Detergent (kg)</label>
+          <p className="bg-gray-100 p-3 rounded-md">
+            {(user?.wallet?.coins / 1000).toFixed(3)} kg (Current Year)
+          </p>
+        </div>
 
-<div>
-  <label className="block text-gray-700 font-semibold">Earned Detergent (kg)</label>
-  <p className="bg-gray-100 p-3 rounded-md">
-    {(user?.wallet?.coins / 1000).toFixed(3)} kg
-  </p>
-</div>
-
-        {/** Editable Fields */}
+        {/* Editable Fields */}
         {isEditing ? (
           <>
             <div>
               <label className="block text-gray-700 font-semibold">Phone</label>
               <input
-              title="Phone"
+                title="Phone"
                 type="text"
                 name="phone"
                 value={formData.phone}
@@ -111,7 +135,7 @@ export default function Profile() {
             <div>
               <label className="block text-gray-700 font-semibold">Address</label>
               <input
-              title="Address"
+                title="Address"
                 type="text"
                 name="address"
                 value={formData.address}
@@ -123,7 +147,7 @@ export default function Profile() {
             <div>
               <label className="block text-gray-700 font-semibold">State</label>
               <input
-              title="state"
+                title="State"
                 type="text"
                 name="state"
                 value={formData.state}
@@ -135,7 +159,7 @@ export default function Profile() {
             <div>
               <label className="block text-gray-700 font-semibold">Pincode</label>
               <input
-              title="Pincode"
+                title="Pincode"
                 type="text"
                 name="pincode"
                 value={formData.pincode}
@@ -147,7 +171,7 @@ export default function Profile() {
             <div>
               <label className="block text-gray-700 font-semibold">Country</label>
               <select
-              title="Country"
+                title="Country"
                 name="country"
                 value={formData.country}
                 onChange={handleChange}
@@ -174,6 +198,77 @@ export default function Profile() {
           >
             Edit Profile
           </button>
+        )}
+      </div>
+
+      {/* Detergent Earning History Table */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Detergent Earning History</h2>
+        {user?.walletHistory && user.walletHistory.length > 0 ? (
+          <table className="min-w-full border">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="px-4 py-2 border">Year</th>
+                <th className="px-4 py-2 border">Detergent Earned (kg)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {user.walletHistory.map((record: { year: number; coins: number }) => (
+                <tr key={record.year}>
+                  <td className="px-4 py-2 border">{record.year}</td>
+                  <td className="px-4 py-2 border">{(record.coins / 1000).toFixed(3)} kg</td>
+                </tr>
+              ))}
+              <tr className="font-bold">
+                <td className="px-4 py-2 border">Total</td>
+                <td className="px-4 py-2 border">
+                  {(
+                    (user.walletHistory.reduce(
+                      (acc: number, record: any) => acc + record.coins,
+                      0
+                    ) +
+                      (user.wallet?.coins || 0)) /
+                    1000
+                  ).toFixed(3)}{" "}
+                  kg
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        ) : (
+          <p>No detergent earning history available.</p>
+        )}
+        <p className="mt-2 text-sm text-gray-600">
+          At the start of each year, your current year&apos;s detergent earned is added to your history and your current detergent balance is reset.
+        </p>
+      </div>
+
+      {/* Delivery Notifications Section */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Delivery Information</h2>
+        {notifications.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full border">
+              <thead>
+                <tr className="bg-gray-200">
+                  <th className="px-4 py-2 border">Title</th>
+                  <th className="px-4 py-2 border">Message</th>
+                  <th className="px-4 py-2 border">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {notifications.map((notif: any) => (
+                  <tr key={notif._id}>
+                    <td className="px-4 py-2 border">{notif.title}</td>
+                    <td className="px-4 py-2 border">{notif.message}</td>
+                    <td className="px-4 py-2 border">{new Date(notif.createdAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p>No delivery information available.</p>
         )}
       </div>
     </div>

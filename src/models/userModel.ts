@@ -5,9 +5,15 @@ import bcrypt from "bcryptjs";
 export interface ITransaction {
   transactionId: string;
   amount: number;
-  products: string[]; // or a more complex object if needed
+  products: string[];
   date: Date;
 }
+
+export interface IWalletHistory {
+  year: number;
+  coins: number;
+}
+
 export interface IUser extends Document {
   fullName: string;
   email: string;
@@ -21,13 +27,14 @@ export interface IUser extends Document {
     balance: number;
     coins: number;
   };
+  walletHistory?: IWalletHistory[]; // New field for wallet history
   cart: {
     productId: mongoose.Schema.Types.ObjectId;
     quantity: number;
   }[];
   transactions: ITransaction[];
-  otp?: string;         // New field to store OTP
-  otpExpires?: Date;    // New field to store OTP expiration time
+  otp?: string;
+  otpExpires?: Date;
   comparePassword(password: string): Promise<boolean>;
 }
 
@@ -40,7 +47,14 @@ const UserSchema = new Schema<IUser>({
   state: { type: String, required: true },
   pincode: { type: String, required: true },
   address: { type: String, required: true },
-  wallet: { balance: { type: Number, default: 0 }, coins: { type: Number, default: 0 } },
+  wallet: { 
+    balance: { type: Number, default: 0 },
+    coins: { type: Number, default: 0 },
+  },
+  walletHistory: [{
+    year: { type: Number, required: true },
+    coins: { type: Number, default: 0 },
+  }],
   cart: [
     {
       productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
@@ -51,7 +65,7 @@ const UserSchema = new Schema<IUser>({
     {
       transactionId: { type: String, required: true },
       amount: { type: Number, required: true },
-      products: [{ type: String }], // Array of product names (or IDs, etc.)
+      products: [{ type: String }],
       date: { type: Date, default: Date.now },
     },
   ],
