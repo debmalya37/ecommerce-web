@@ -1,15 +1,13 @@
 "use client";
-
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react"; // Import useSession
+import { useSession } from "next-auth/react"; // Get session data
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
 
 export default function ProductDetails({ params }: { params: { id: string } }) {
-  const { data: session } = useSession(); // Get session data
-  const userEmail = session?.user?.email || ""; // Fetch user email
-
+  const { data: session } = useSession();
+  const userEmail = session?.user?.email || "";
   const router = useRouter();
   const [product, setProduct] = useState<any>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -17,6 +15,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [alreadyInCart, setAlreadyInCart] = useState(false);
+  const [zoom, setZoom] = useState(1.3); // Default zoom (30% in)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -43,31 +42,23 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     }
   }, [product]);
 
-
-
   if (loading) return <Loader />;
   if (!product) return <p className="text-center mt-10 text-red-600">Product not found</p>;
 
   const handleAddToCart = () => {
-    // If already in cart, do nothing
     if (alreadyInCart) return;
-
     const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
-
     const newProduct = {
       _id: product._id,
       name: product.name,
       quantity,
       price: product.price,
     };
-
-    // Add new product to the cart
     cartItems.push(newProduct);
     localStorage.setItem("cart", JSON.stringify(cartItems));
-    setAlreadyInCart(true); // Update state so button shows as disabled
+    setAlreadyInCart(true);
     window.location.reload();
   };
-
 
   const handleBuyNow = () => {
     sessionStorage.setItem("selectedProduct", JSON.stringify({ ...product, quantity }));
@@ -83,34 +74,40 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     setCurrentImageIndex((prevIndex) => (prevIndex - 1 + product.images.length) % product.images.length);
   };
 
-  const openModal = () => {
-    setIsModalOpen(true); // Open modal
-  };
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+  const incrementQuantity = () => setQuantity((prev) => prev + 1);
+  const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1));
 
-  const closeModal = () => {
-    setIsModalOpen(false); // Close modal
-  };
-
-  const incrementQuantity = () => {
-    setQuantity((prevQuantity) => prevQuantity + 1);
-  };
-
-  const decrementQuantity = () => {
-    setQuantity((prevQuantity) => Math.max(1, prevQuantity - 1));
+  // Handle mouse wheel event for zooming
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    // Adjust zoom level based on scroll delta (tune factor as needed)
+    setZoom((prevZoom) => {
+      const newZoom = prevZoom - e.deltaY * 0.001;
+      // Clamp the zoom level between 1 (no zoom) and 3 (300%)
+      if (newZoom < 1) return 1;
+      if (newZoom > 3) return 3;
+      return newZoom;
+    });
   };
 
   return (
-    // Outer container that fits in the viewport height (100vh)
     <div className="h-screen bg-gray-100 flex flex-col">
-      {/* Content container with vertical scrolling if needed */}
+      {/* Content container with vertical scrolling */}
       <div className="flex-1 overflow-y-auto container mx-auto p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Image Section */}
           <div className="space-y-4">
-            <div className="relative w-full h-56 sm:h-72 md:h-96 overflow-hidden bg-gray-100 rounded-lg shadow-md">
+            <div 
+              className="relative w-full h-56 sm:h-72 md:h-96 overflow-hidden bg-gray-100 rounded-lg shadow-md"
+              onWheel={handleWheel}
+              onMouseLeave={() => setZoom(1.3)} // Reset zoom on mouse leave
+            >
               <img
                 src={product.images[currentImageIndex]}
                 alt={product.name}
+                style={{ transform: `scale(${zoom})`, transition: "transform 0.2s ease" }}
                 className="w-full h-full object-contain cursor-pointer"
                 onClick={openModal}
                 onError={(e) => (e.currentTarget.src = "/images/placeholder.jpg")}
@@ -147,7 +144,6 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
           {/* Product Details */}
           <div className="space-y-6">
             <h1 className="text-3xl font-semibold text-gray-800">{product.name}</h1>
-            {/* Quantity Selector */}
             {product.stock > 0 && (
               <div className="flex items-center space-x-4">
                 <label htmlFor="quantity" className="text-lg text-gray-700">
@@ -176,69 +172,51 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
               </div>
             )}
             <div className="flex items-center">
-            <div className="bg-purple-600 text-white text-sm font-bold px-3 py-2 rounded-md">
-              Hot Deal
-            </div>
+              <div className="bg-purple-600 text-white text-sm font-bold px-3 py-2 rounded-md">
+                Hot Deal
+              </div>
             </div>
             {/* Pricing Section */}
             <div className="flex items-center space-x-2">
-              {/* Final Price */}
-              <span className="text-2xl font-bold text-gray-900">
-                ₹{product.price}
-              </span>
-              {/* MRP Label */}
+              <span className="text-2xl font-bold text-gray-900">₹{product.price}</span>
               <span className="text-lg font-bold text-gray-900">MRP:</span>
-              {/* Original Price (Strikethrough) */}
-              <span className="text-sm text-gray-500 line-through">
-                ₹{product.originalPrice}
-              </span>
-              {/* Discount Percentage */}
+              <span className="text-sm text-gray-500 line-through">₹{product.originalPrice}</span>
               <span className="text-lg font-bold text-green-700">
                 ↓{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
               </span>
             </div>
-
-            
-            
-            
             <p className="text-gray-600">{product.description}</p>
-
-            {/* Stock Status */}
             {product.stock === 0 ? (
               <p className="text-red-600 font-bold text-lg">Out of Stock</p>
             ) : (
               <p className="text-green-600 font-semibold"></p>
             )}
 
-            
-
-            {/* Action Buttons */}
             {/* Fixed Action Buttons for Mobile */}
-<div className="fixed bottom-0 left-0 right-0 bg-white shadow-md p-4 flex justify-between z-50 md:flex space-x-4">
-  <button
-    onClick={handleAddToCart}
-    disabled={alreadyInCart || product.stock === 0}
-    className={`flex-1 mx-1 py-3 text-lg font-semibold rounded-md ${
-      product.stock === 0 || alreadyInCart
-        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-        : "bg-blue-600 hover:bg-blue-700 text-white"
-    }`}
-  >
-    {alreadyInCart ? "Already in Cart" : "Add to Cart"}
-  </button>
-  <button
-    onClick={handleBuyNow}
-    disabled={product.stock === 0}
-    className={`flex-1 mx-1 py-3 text-lg font-semibold rounded-md ${
-      product.stock === 0
-        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-        : "bg-orange-500 hover:bg-orange-600 text-white"
-    }`}
-  >
-    Buy Now
-  </button>
-</div>
-
+            <div className="fixed bottom-0 left-0 right-0 bg-white shadow-md p-4 flex justify-between z-50 md:relative md:mt-4 md:static md:flex md:space-x-4">
+              <button
+                onClick={handleAddToCart}
+                disabled={alreadyInCart || product.stock === 0}
+                className={`flex-1 mx-1 py-3 text-lg font-semibold rounded-md ${
+                  product.stock === 0 || alreadyInCart
+                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              >
+                {alreadyInCart ? "Already in Cart" : "Add to Cart"}
+              </button>
+              <button
+                onClick={handleBuyNow}
+                disabled={product.stock === 0}
+                className={`flex-1 mx-1 py-3 text-lg font-semibold rounded-md ${
+                  product.stock === 0
+                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    : "bg-orange-500 hover:bg-orange-600 text-white"
+                }`}
+              >
+                Buy Now
+              </button>
+            </div>
           </div>
         </div>
       </div>
