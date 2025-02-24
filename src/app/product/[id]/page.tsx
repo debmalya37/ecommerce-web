@@ -5,6 +5,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
 import ImageZoom from "@/components/ImageZoom"; // Import the ImageZoom component
+import ImageZoomWithPopUp from "@/components/ImageZoomWithPopUp";
 
 export default function ProductDetails({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
@@ -85,9 +86,9 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Image Section */}
           <div className="space-y-4">
-            {/* Using the ImageZoom component for Amazon-like zoom */}
             <div className="relative">
-              <ImageZoom
+              {/* Use the ImageZoomWithPopUp component for the zoom effect */}
+              <ImageZoomWithPopUp
                 src={product.images[currentImageIndex]}
                 alt={product.name}
                 containerClassName="w-full h-56 sm:h-72 md:h-96 overflow-hidden bg-gray-100 rounded-lg shadow-md cursor-pointer"
