@@ -1,14 +1,11 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 import ProductCard from "@/components/ProductCard";
 import { useSearchParams } from "next/navigation";
-import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import Loader from "@/components/Loader";
 
-// Client-side only component
 const ProductList = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -19,9 +16,7 @@ const ProductList = () => {
 
   useEffect(() => {
     const cat = searchParams.get("category");
-    if (cat) {
-      setSelectedCategory(cat);
-    }
+    if (cat) setSelectedCategory(cat);
   }, [searchParams]);
 
   useEffect(() => {
@@ -31,7 +26,6 @@ const ProductList = () => {
 
   useEffect(() => {
     let tempProducts = products;
-
     if (selectedCategory !== "All") {
       tempProducts = tempProducts.filter((product) => {
         const productCat = product.category.toLowerCase().replace(/\s+/g, "-");
@@ -39,7 +33,6 @@ const ProductList = () => {
         return productCat === selectedCat;
       });
     }
-
     if (searchTerm.trim() !== "") {
       const term = searchTerm.toLowerCase();
       tempProducts = tempProducts.filter(
@@ -70,19 +63,18 @@ const ProductList = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 bg-blue-100">
+    <div className="container mx-auto p-6">
       {/* Filter Section */}
-      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        {/* Category Filter */}
-        <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+      <div className="mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex-1">
+          <label htmlFor="category" className="block text-sm font-medium text-gray-300">
             Category
           </label>
           <select
             id="category"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="mt-1 block w-full sm:w-48 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className="mt-1 w-full sm:w-48 bg-gray-800 text-gray-300 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="All">All Categories</option>
             {categories.map((cat) => (
@@ -92,10 +84,8 @@ const ProductList = () => {
             ))}
           </select>
         </div>
-
-        {/* Search Box */}
-        <div className="w-full sm:w-64">
-          <label htmlFor="search" className="block text-sm font-medium text-gray-700">
+        <div className="flex-1">
+          <label htmlFor="search" className="block text-sm font-medium text-gray-300">
             Search Products
           </label>
           <input
@@ -104,13 +94,13 @@ const ProductList = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by title or description"
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className="mt-1 w-full bg-gray-800 text-gray-300 border border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
         {filteredProducts.map((product: any) => (
           <ProductCard
             key={product._id}
@@ -127,11 +117,12 @@ const ProductList = () => {
   );
 };
 
-// Main page component
 export default function ProductPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto p-6"> <Loader /></div>}>
-      <ProductList />
-    </Suspense>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-purple-900">
+      <Suspense fallback={<div className="container mx-auto p-6"><Loader /></div>}>
+        <ProductList />
+      </Suspense>
+    </div>
   );
 }

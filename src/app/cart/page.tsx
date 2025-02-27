@@ -44,41 +44,63 @@ export default function CartPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className=" cart max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-center mb-6">Shopping Cart</h2>
-        {cart.length === 0 ? (
-          <p className="text-center text-gray-600">Your cart is empty</p>
-        ) : (
-          <div className="space-y-4">
-            {cart.map((item) => (
-              <div
-                key={item._id}
-                className="flex flex-col md:flex-row justify-between items-center border p-4 rounded-md"
-              >
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold">{item.name}</h3>
-                  <p className="text-gray-600">Price: ₹{item.price}</p>
-                  <p className="text-gray-600">Quantity: {item.quantity}</p>
-                </div>
-                <button
-                  onClick={() => handleRemoveFromCart(item._id)}
-                  className="mt-2 md:mt-0 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+    <div className="bg-[#1F2A37] min-h-screen flex flex-col">
+      <div className="container mx-auto py-8 px-4 flex-1">
+        <div className="max-w-4xl mx-auto bg-[#2B3A4A] text-white shadow-lg rounded-lg p-6">
+          <h2 className="text-2xl font-bold text-center mb-6">Your Shopping Cart</h2>
+          {cart.length === 0 ? (
+            <p className="text-center text-gray-300">Your cart is empty</p>
+          ) : (
+            <div className="space-y-4">
+              {cart.map((item) => (
+                <div
+                  key={item._id}
+                  className="flex flex-col md:flex-row justify-between items-center bg-[#1F2A37] rounded-md p-4 shadow transition hover:shadow-md"
                 >
-                  Remove
-                </button>
-              </div>
-            ))}
+                  {/* Item details */}
+                  <div className="flex-1 mb-2 md:mb-0 md:mr-4">
+                    <h3 className="text-lg font-semibold text-white">
+                      {item.name}
+                    </h3>
+                    <p className="text-sm text-gray-300">
+                      Price:{" "}
+                      <span className="font-bold text-green-400">
+                        ₹{item.price}
+                      </span>
+                    </p>
+                    <p className="text-sm text-gray-300">
+                      Quantity: <span className="font-bold">{item.quantity}</span>
+                    </p>
+                  </div>
+
+                  {/* Remove button */}
+                  <button
+                    onClick={() => handleRemoveFromCart(item._id)}
+                    className="mt-2 md:mt-0 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-semibold transition"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Cart total & Checkout */}
+          <div className="mt-8 flex flex-col sm:flex-row justify-between items-center">
+            <p className="text-xl font-bold">
+              Total:{" "}
+              <span className="text-green-400">₹{total.toFixed(2)}</span>
+            </p>
+            <button
+              onClick={handleCheckout}
+              className={`mt-4 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-md transition ${
+                cart.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={cart.length === 0}
+            >
+              Proceed to Checkout
+            </button>
           </div>
-        )}
-        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center">
-          <p className="text-xl font-bold">Total: ₹{total.toFixed(2)}</p>
-          <button
-            onClick={handleCheckout}
-            className="mt-4 sm:mt-0 bg-blue-900 text-white px-6 py-3 rounded-md hover:bg-green-600 transition"
-          >
-            Checkout
-          </button>
         </div>
       </div>
     </div>

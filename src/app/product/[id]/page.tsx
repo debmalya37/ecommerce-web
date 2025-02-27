@@ -1,16 +1,16 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react"; // Get session data
+import { useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
-import ImageZoom from "@/components/ImageZoom"; // Import the ImageZoom component
-import ImageZoomWithPopUp from "@/components/ImageZoomWithPopUp";
+import ImageZoomWithPopup from "@/components/ImageZoomWithPopUp";
 
 export default function ProductDetails({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
   const userEmail = session?.user?.email || "";
   const router = useRouter();
+
   const [product, setProduct] = useState<any>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -18,6 +18,14 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [alreadyInCart, setAlreadyInCart] = useState(false);
 
+  // Zoom state for the modal image
+  const [modalZoom, setModalZoom] = useState(1);
+
+  // For detecting double/triple clicks
+  const [clickCount, setClickCount] = useState(0);
+  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch product details
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -29,12 +37,10 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
         setLoading(false);
       }
     };
-
-    if (params.id) {
-      fetchProduct();
-    }
+    if (params.id) fetchProduct();
   }, [params.id]);
 
+  // Check if product is already in cart
   useEffect(() => {
     if (product) {
       const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -44,8 +50,9 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   }, [product]);
 
   if (loading) return <Loader />;
-  if (!product) return <p className="text-center mt-10 text-red-600">Product not found</p>;
+  if (!product) return <p className="text-center mt-10 text-red-500">Product not found</p>;
 
+  // Add to cart logic
   const handleAddToCart = () => {
     if (alreadyInCart) return;
     const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -61,118 +68,213 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     window.location.reload();
   };
 
+  // Buy Now logic
   const handleBuyNow = () => {
     sessionStorage.setItem("selectedProduct", JSON.stringify({ ...product, quantity }));
     sessionStorage.setItem("source", "buy-now");
     router.push("/userBillingDetails");
   };
+
+  // Image navigation
   const handleNextImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex + 1) % product.images.length);
   };
-
   const handlePrevImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex - 1 + product.images.length) % product.images.length);
   };
 
-  const openModal = () => setIsModalOpen(true);
+  // Modal controls
+  const openModal = () => {
+    setIsModalOpen(true);
+    setModalZoom(1);
+    setClickCount(0);
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+  };
   const closeModal = () => setIsModalOpen(false);
 
+  // Quantity controls
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1));
 
+  // Detect double/triple clicks in modal
+  const handleModalImageClick = () => {
+    setClickCount((prevCount) => {
+      const newCount = prevCount + 1;
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+
+      // 300ms to determine if user is double or triple clicking
+      clickTimerRef.current = setTimeout(() => {
+        if (newCount === 2) {
+          // Double-click => zoom in to 130%
+          setModalZoom(1.3);
+        } else if (newCount >= 3) {
+          // Triple-click => reset to 100%
+          setModalZoom(1);
+        }
+        setClickCount(0);
+      }, 300);
+
+      return newCount;
+    });
+  };
+
+  // Basic discount logic for demonstration
+  const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+
   return (
-    <div className="h-screen bg-gray-100 flex flex-col">
-      <div className="flex-1 overflow-y-auto container mx-auto p-4">
+    <div className="bg-[#1F2A37] text-white min-h-screen flex flex-col">
+      <div className="container mx-auto p-4 flex-1">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Image Section */}
+          {/* Left: Images */}
           <div className="space-y-4">
-            <div className="relative">
-              {/* Use the ImageZoomWithPopUp component for the zoom effect */}
-              <ImageZoomWithPopUp
+            {/* Main Image with Zoom Popup (click => open modal) */}
+            <div className="relative cursor-pointer" onClick={openModal}>
+              <ImageZoomWithPopup
                 src={product.images[currentImageIndex]}
                 alt={product.name}
-                containerClassName="w-full h-56 sm:h-72 md:h-96 overflow-hidden bg-gray-100 rounded-lg shadow-md cursor-pointer"
+                containerClassName="w-full h-64 sm:h-80 md:h-96 bg-[#2B3A4A] rounded-lg shadow-md flex items-center justify-center overflow-hidden"
+                zoomLevel={2}
               />
+              {/* Navigation arrows */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevImage();
+                }}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-3 rounded-full hover:bg-gray-600"
+              >
+                &lt;
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextImage();
+                }}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-3 rounded-full hover:bg-gray-600"
+              >
+                &gt;
+              </button>
             </div>
-            {/* Thumbnail Navigation */}
-            <div className="flex space-x-4 overflow-x-auto bg-sky-100 rounded-md p-2">
-              {product.images.map((image: string, index: number) => (
+
+            {/* Thumbnail strip */}
+            <div className="flex space-x-3 bg-[#2B3A4A] p-2 rounded-md overflow-x-auto">
+              {product.images.map((img: string, idx: number) => (
                 <img
-                  key={index}
-                  src={image}
-                  alt={`Thumbnail ${index + 1}`}
-                  className={`w-16 h-16 object-cover rounded-md cursor-pointer ${
-                    currentImageIndex === index ? "border-2 border-blue-600" : ""
+                  key={idx}
+                  src={img}
+                  alt={`Thumbnail ${idx + 1}`}
+                  onClick={() => setCurrentImageIndex(idx)}
+                  className={`w-16 h-16 rounded-md object-cover cursor-pointer transition ${
+                    currentImageIndex === idx ? "border-2 border-blue-500 scale-105" : "border border-transparent"
                   }`}
-                  onClick={() => setCurrentImageIndex(index)}
                 />
               ))}
             </div>
           </div>
 
-          {/* Product Details */}
-          <div className="space-y-6">
-            <h1 className="text-3xl font-semibold text-gray-800">{product.name}</h1>
+          {/* Right: Product Info */}
+          <div className="flex flex-col space-y-4 bg-[#2B3A4A] p-6 rounded-lg shadow-md">
+            {/* Discount badge if any */}
+            {discountPercent > 0 && (
+              <div className="text-xs inline-block bg-blue-600 text-white px-2 py-1 rounded-full self-start">
+                Up to {discountPercent}% off
+              </div>
+            )}
+
+            {/* Title */}
+            <h1 className="text-3xl font-bold text-white">{product.name}</h1>
+
+            {/* Price and discount info */}
+            <div className="flex items-baseline space-x-2">
+              <span className="text-2xl font-extrabold text-green-400">₹{product.price.toLocaleString()}</span>
+              <span className="text-sm font-bold text-gray-400">MRP:</span>
+              <span className="text-sm line-through text-gray-400">₹{product.originalPrice.toLocaleString()}</span>
+              {discountPercent > 0 && (
+                <span className="text-sm font-semibold text-yellow-300">
+                  ↓{discountPercent}%
+                </span>
+              )}
+            </div>
+
+            {/* Stock / "Hot Deal" label */}
+            <div className="flex items-center space-x-2">
+              {product.stock > 0 ? (
+                <span className="bg-purple-600 text-white text-sm font-bold px-3 py-2 rounded-full">
+                  Hot Deal
+                </span>
+              ) : (
+                <span className="bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                  Out of Stock
+                </span>
+              )}
+            </div>
+
+            {/* Description */}
+            <p className="text-sm text-gray-200 leading-relaxed">
+              {product.description}
+            </p>
+
+            {/* Quantity selection (if in stock) */}
             {product.stock > 0 && (
               <div className="flex items-center space-x-4">
-                <label htmlFor="quantity" className="text-lg text-gray-700">
+                <label htmlFor="quantity" className="text-sm font-semibold text-gray-300">
                   Quantity:
                 </label>
                 <div className="flex items-center space-x-2">
-                  <button onClick={decrementQuantity} className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
+                  <button
+                    onClick={decrementQuantity}
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                  >
                     -
                   </button>
-                  <span className="text-lg font-semibold">{quantity}</span>
+                  <span className="text-lg font-bold">{quantity}</span>
                   <button
                     onClick={incrementQuantity}
-                    className={`px-4 py-2 rounded-md ${quantity < product.stock ? "bg-green-600 hover:bg-green-900 text-white" : "bg-gray-400 text-gray-700 cursor-not-allowed"}`}
                     disabled={quantity >= product.stock}
+                    className={`px-3 py-1 rounded text-white ${
+                      quantity < product.stock ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 cursor-not-allowed"
+                    }`}
                   >
                     +
                   </button>
                 </div>
               </div>
             )}
-            <div className="flex items-center">
-              <div className="bg-purple-600 text-white text-sm font-bold px-3 py-2 rounded-md">
-                Hot Deal
-              </div>
-            </div>
-            {/* Pricing Section */}
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-gray-900">₹{product.price}</span>
-              <span className="text-lg font-bold text-gray-900">MRP:</span>
-              <span className="text-sm text-gray-500 line-through">₹{product.originalPrice}</span>
-              <span className="text-lg font-bold text-green-700">
-                ↓{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
-              </span>
-            </div>
-            <p className="text-gray-600">{product.description}</p>
-            {product.stock === 0 ? (
-              <p className="text-red-600 font-bold text-lg">Out of Stock</p>
-            ) : (
-              <p className="text-green-600 font-semibold"></p>
-            )}
 
-            {/* Fixed Action Buttons */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white shadow-md p-4 flex justify-between z-50 md:relative md:mt-4 md:static md:flex md:space-x-4">
+            {/* Action Buttons */}
+            <div className="fixed bottom-0 left-0 right-0 mt-auto flex space-x-3 pt-3 shadow-md z-50 md:relative md:mt-4 md:flex md:space-x-4 md:mr-1 md:ml-1">
               <button
                 onClick={handleAddToCart}
                 disabled={alreadyInCart || product.stock === 0}
-                className={`flex-1 mx-1 py-3 text-lg font-semibold rounded-md ${
+                className={`flex-1 inline-flex items-center justify-center text-sm font-semibold px-4 py-2 rounded-md transition ${
                   product.stock === 0 || alreadyInCart
-                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    ? "bg-gray-600 text-gray-300 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700 text-white"
                 }`}
               >
-                {alreadyInCart ? "Already in Cart" : "Add to Cart"}
+                {alreadyInCart ? (
+                  "Already in Cart"
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      className="w-5 h-5 mr-2"
+                    >
+                      <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7.5M17 13l1.5 7.5M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+                    </svg>
+                    Add to Cart
+                  </>
+                )}
               </button>
+
               <button
                 onClick={handleBuyNow}
                 disabled={product.stock === 0}
-                className={`flex-1 mx-1 py-3 text-lg font-semibold rounded-md ${
+                className={`flex-1 inline-flex items-center justify-center text-sm font-semibold px-4 py-2 rounded-md transition ${
                   product.stock === 0
-                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    ? "bg-gray-600 text-gray-300 cursor-not-allowed"
                     : "bg-orange-500 hover:bg-orange-600 text-white"
                 }`}
               >
@@ -183,17 +285,38 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* Modal for Full-Size Image */}
+      {/* Fullscreen Modal for the image */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="relative bg-white p-6 rounded-lg max-w-[90vw] max-h-[90vh]">
-            <button onClick={closeModal} className="absolute top-2 right-2 text-gray-600 text-3xl">
+          <div
+            className="relative bg-[#2B3A4A] text-white p-6 rounded-lg max-w-[90vw] max-h-[90vh] overflow-auto"
+            onClick={handleModalImageClick}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                closeModal();
+              }}
+              className="absolute top-2 right-2 text-gray-300 hover:text-white text-3xl"
+            >
               &times;
             </button>
-            <img src={product.images[currentImageIndex]} alt={product.name} className="w-full h-full object-contain" />
+            <div className="flex justify-center">
+              <img
+                src={product.images[currentImageIndex]}
+                alt={product.name}
+                style={{ transform: `scale(${modalZoom})`, transition: "transform 0.2s ease" }}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+            <p className="mt-2 text-sm text-gray-400 text-center">
+              Double-click for 130% zoom, triple-click to reset.
+            </p>
           </div>
         </div>
       )}
     </div>
   );
+
+  
 }

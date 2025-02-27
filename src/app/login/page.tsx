@@ -154,7 +154,12 @@ export default function LoginPage() {
       <div className="relative w-[350px] h-[500px] bg-[url('https://doc-08-2c-docs.googleusercontent.com/docs/securesc/.../1Sx0jhdpEpnNIydS4rnN4kHSJtU1EyWka?e=view&authuser=0')] bg-cover bg-center rounded-[10px] shadow-[5px_20px_50px_#000] overflow-hidden">
         <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         <div className="relative w-full h-full flex flex-col items-center justify-center p-6 z-10">
+          <div className="relative flex items-center space-x-10 w-full mb-6 justify-center">
+          <button className="flex text-center m-2 p-2 pr-5 pl-5 bg-white text-black rounded-md">Login</button>
+          <Link href={"/register"} className="flex text-center m-2 p-2 pr-4 pl-4 bg-[#573b8a] text-gray-200 rounded-md">Sign up</Link>
+          </div>
           <h2 className="text-3xl font-bold text-white mb-6">Login</h2>
+          
           {error && <p className="text-red-500 text-center">{error}</p>}
           <form onSubmit={handleSubmit} className="flex flex-col items-center w-full">
             <input

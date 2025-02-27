@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -51,6 +52,10 @@ export default function RegisterPage() {
       <div className="relative w-[350px] sm:w-[400px] bg-[#1e1e2f]/80 rounded-xl shadow-xl p-6 text-white backdrop-blur-md">
         {/* Cool background overlay (optional) */}
         <div className="absolute inset-0 bg-black bg-opacity-30 rounded-xl pointer-events-none" />
+        <div className="relative flex items-center space-x-10 w-full mb-6 justify-center">
+          <Link href={"/login"} className="flex text-center m-0 p-2 pr-5 pl-5 bg-[#573b8a] text-gray-200 rounded-md">Login</Link>
+          <button className="flex text-center m-0 p-2 pr-4 pl-4 bg-white text-black rounded-md">Sign up</button>
+          </div>
 
         <div className="relative z-10">
           <h2 className="text-3xl font-extrabold text-center mb-6 text-[#f5f5f7] drop-shadow-lg">
