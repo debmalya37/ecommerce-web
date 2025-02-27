@@ -31,7 +31,6 @@
     "react-admin": "^5.5.3",
     "react-dom": "^18",
     "react-hot-toast": "^2.5.1",
-    "react-image-magnify": "^2.7.4",
     "twilio": "^5.4.2",
     "uuid": "^11.0.4"
   },
@@ -44,7 +43,6 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-fontawesome": "^1.6.8",
-    "@types/react-image-magnify": "^2.7.4",
     "eslint": "^8",
     "eslint-config-next": "14.2.7",
     "postcss": "^8",
