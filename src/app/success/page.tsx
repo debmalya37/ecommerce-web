@@ -1,9 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import axios from "axios";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/hooks/useWallet"; // Import the useWallet hook
 
 export default function SuccessPage() {
   const [userDetails, setUserDetails] = useState<any>(null);
@@ -11,9 +11,13 @@ export default function SuccessPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [walletEarned, setWalletEarned] = useState(0);
-  const [coinRate, setCoinRate] = useState<number>(50); // Default to 50
+  const [coinRate, setCoinRate] = useState<number>(50); // Default coin rate: ₹50 per coin
   const { walletBalance } = useWallet(userDetails?.email);
   const router = useRouter();
+
+  
+  // Ref flag to ensure the order is posted only once
+  const orderPostedRef = useRef(false);
 
   // Fetch coin earning rate from the API
   useEffect(() => {
@@ -28,7 +32,7 @@ export default function SuccessPage() {
     fetchCoinRate();
   }, []);
 
-  // First effect: retrieve user details, payment source, compute totals, etc.
+  // Retrieve user details, payment source, and compute totals
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem("userDetails") || "{}");
     const source = sessionStorage.getItem("source");
@@ -52,16 +56,19 @@ export default function SuccessPage() {
     setPaymentStatus("Payment Successful!");
   }, []);
 
-  // Second effect: update wallet reward (if needed) and add transaction record
+  // Update wallet reward, add transaction record, and push order details (only once)
   useEffect(() => {
-    const addTransactionRecord = async () => {
+    const addTransactionAndOrderRecord = async () => {
+      // Skip if order has already been posted
+      if (orderPostedRef.current) return;
+
       const originalTotal = Number(sessionStorage.getItem("originalTotal"));
       const walletUsed = Number(sessionStorage.getItem("walletUsed") || "0");
       const transactionId = sessionStorage.getItem("transactionId");
       const rewardGiven = sessionStorage.getItem("rewardGiven");
 
       if (!transactionId) {
-        console.log("No valid transactionId. Skipping transaction record update.");
+        console.log("No valid transactionId. Skipping update.");
         return;
       }
       if (rewardGiven) {
@@ -69,8 +76,8 @@ export default function SuccessPage() {
         return;
       }
 
+      // Update wallet reward if applicable
       if (originalTotal) {
-        // Use the fetched coin rate instead of hardcoded 50
         const coinsEarned = Math.floor(originalTotal / coinRate);
         const netChange = coinsEarned - walletUsed;
         setWalletEarned(coinsEarned);
@@ -80,7 +87,6 @@ export default function SuccessPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: userDetails?.email, walletChange: netChange, transactionId }),
           });
-
           const data = await response.json();
           if (data.success) {
             setWalletEarned(coinsEarned);
@@ -93,6 +99,7 @@ export default function SuccessPage() {
         }
       }
 
+      // Add transaction record
       const purchasedProducts = products.map((p) => p.name);
       const transactionData = {
         email: userDetails.email,
@@ -107,6 +114,28 @@ export default function SuccessPage() {
         console.error("Error adding transaction record:", error);
       }
 
+      // Push the order details directly to the user's orders
+      const orderData = {
+        orderId: transactionId, // from your payment flow
+        totalAmount,
+        products: products.map((p) => ({
+          productId: p._id, // ensure this is a valid ObjectId string
+          name: p.name,
+          quantity: p.quantity,
+          price: p.price,
+        })),
+        status: "Placed",
+        placedAt: new Date().toISOString(),
+      };
+      try {
+        await axios.post("/api/orders", { email: userDetails.email, order: orderData });
+        // Mark order as posted so that it won't post again
+        orderPostedRef.current = true;
+      } catch (error) {
+        console.error("Error adding order record:", error);
+      }
+
+      // Optionally clear sessionStorage if not coming from a valid payment URL
       if (typeof window !== "undefined") {
         const currentUrl = window.location.href;
         if (!currentUrl.includes("sltTkn=") && !currentUrl.includes("/api/status/")) {
@@ -118,12 +147,11 @@ export default function SuccessPage() {
     };
 
     if (userDetails?.email) {
-      addTransactionRecord();
+      addTransactionAndOrderRecord();
     }
   }, [userDetails?.email, products, totalAmount, coinRate]);
 
-
-// PDF Download function
+  // PDF Download function
 const handleDownloadInvoice = () => {
   const doc = new jsPDF();
 
@@ -203,6 +231,7 @@ const handlePrintInvoice = () => {
 
   doc.save("invoice.pdf");
 };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">

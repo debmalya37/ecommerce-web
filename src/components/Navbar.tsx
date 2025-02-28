@@ -92,6 +92,10 @@ export default function Navbar() {
                 <Link href="/profile">
                   <span className="hover:underline">Profile</span>
                 </Link>
+                <Link href="/profile/orders">
+                  {/* <span className="hover:underline">Orders</span> */}
+                  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAv0lEQVR4nO2WSwoCMRBEcw31QoogpsF72BlG1+KtxFmJ9/Gz0VVJyEodZ2InIoEu6FVDP1KVRRmj+rcs+EhwyDN8iAbng4Yx34KFhsnvkILNuwsxeZYNlqhsMGnGEdKMy/pcEik4c+v43DCirCbwRdowLJaD13sL8Cjs3LkP3CT0qrrFwXUA874TbFFNE3rVjeBWM9RDPx5qwXe/m6OadIID3G0T4C0RuE0v9Pnl3Fi4qwzGJwLvLHgcDVWZH+kBw0Lc2yYZ514AAAAASUVORK5CYII=" alt="purchase-order"/>
+                </Link>
                 {/* Notification Icon (desktop) */}
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}

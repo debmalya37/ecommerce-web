@@ -4,6 +4,7 @@ import axios from "axios";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
+import Link from "next/link";
 
 export default function Profile() {
   const [user, setUser] = useState<any>(null);
@@ -97,7 +98,12 @@ export default function Profile() {
   return (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
       <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">My Profile</h1>
-
+      <div className="mt-auto flex items-center justify-between pt-3">
+      <Link className="inline-flex items-center text-sm font-semibold px-4 py-2 rounded-md transition bg-white border-2 border-green-600 hover:bg-blue-400" href="/profile/orders">
+                   <span className="flex text-center text-black rounded-md pr-1">Orders</span>
+                  <img className="flex text-center bg-white text-black rounded-md" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAv0lEQVR4nO2WSwoCMRBEcw31QoogpsF72BlG1+KtxFmJ9/Gz0VVJyEodZ2InIoEu6FVDP1KVRRmj+rcs+EhwyDN8iAbng4Yx34KFhsnvkILNuwsxeZYNlqhsMGnGEdKMy/pcEik4c+v43DCirCbwRdowLJaD13sL8Cjs3LkP3CT0qrrFwXUA874TbFFNE3rVjeBWM9RDPx5qwXe/m6OadIID3G0T4C0RuE0v9Pnl3Fi4qwzGJwLvLHgcDVWZH+kBw0Lc2yYZ514AAAAASUVORK5CYII=" alt="purchase-order"/>
+                </Link>
+                </div>
       <div className="space-y-4">
         <div>
           <label className="block text-gray-700 font-semibold">Full Name</label>
@@ -240,6 +246,15 @@ export default function Profile() {
         )}
         <p className="mt-2 text-sm text-gray-600">
           At the start of each year, your current year&apos;s detergent earned is added to your history and your current detergent balance is reset.
+        </p>
+      </div>
+
+      {/* Gift Section */}
+      <div className="mt-6 p-4 bg-green-100 rounded-lg text-center">
+        <h3 className="text-xl font-bold text-green-800">Your Gift for the Next Year</h3>
+        <p className="text-gray-700 mt-2">
+          As a token of our appreciation, you will receive a special gift every year based on your detergent earnings.
+          Keep shopping for more Gift!
         </p>
       </div>
 

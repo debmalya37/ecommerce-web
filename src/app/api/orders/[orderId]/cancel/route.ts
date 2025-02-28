@@ -11,7 +11,7 @@ export async function POST(req: NextRequest, { params }: { params: { orderId: st
       return NextResponse.json({ success: false, error: "Email is required" }, { status: 400 });
     }
 
-    // Find the user by email and update the specific order status to "Cancelled"
+    // Find the user by email
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
@@ -27,12 +27,11 @@ export async function POST(req: NextRequest, { params }: { params: { orderId: st
     order.status = "Cancelled";
     order.cancelledAt = new Date();
 
-    // Optionally: add the coins from this order into walletHistory (if needed)
-    // For example, push an entry to walletHistory for the current year.
+    // Optionally: update wallet history for the current year
     const currentYear = new Date().getFullYear();
     const existingHistory = user.walletHistory?.find((h: any) => h.year === currentYear);
     if (existingHistory) {
-      existingHistory.coins += order.totalAmount; // Or some coin calculation logic
+      existingHistory.coins += order.totalAmount; // Adjust as per your coin logic
     } else {
       user.walletHistory = user.walletHistory || [];
       user.walletHistory.push({ year: currentYear, coins: order.totalAmount });
@@ -40,7 +39,6 @@ export async function POST(req: NextRequest, { params }: { params: { orderId: st
 
     await user.save();
 
-    // Optionally, send a notification to admin or log the cancellation.
     return NextResponse.json({
       success: true,
       message: `Order ${order.orderId} cancelled successfully by ${user.fullName} (${user.email}).`,

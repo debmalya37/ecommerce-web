@@ -263,8 +263,8 @@ const [newCoinRate, setNewCoinRate] = useState<number>(50);
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto space-y-8">
       <section className="bg-white rounded-lg shadow-md p-6">
-    <h2 className="text-2xl font-bold mb-6 text-gray-800">Coin Earning Rate</h2>
-    <p className="mb-4">Current Rate: For every ₹{coinRate} spent, you earn 1 coin.</p>
+    <h2 className="text-2xl font-bold mb-6 text-gray-800">Detegent Earning Rate</h2>
+    <p className="mb-4">Current Rate: For every ₹{coinRate} spent, you earn 1 Gram Detergent.</p>
     <form onSubmit={handleUpdateCoinRate} className="flex flex-col gap-4">
       <input
       title="Coin Earning Rate"
