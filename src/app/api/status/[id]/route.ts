@@ -3,15 +3,25 @@ import { NextRequest, NextResponse } from "next/server";
 import sha256 from "crypto-js/sha256";
 import axios from "axios";
 import { headers } from "next/headers";
+import dbConnect from "@/lib/dbConnect";
+import User from "@/models/userModel";
 
 
 export async function POST(req:Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get("email");
+    const totalAmount = Number(searchParams.get("totalAmount"));
+    const productsStr = searchParams.get("products");
+    const products = productsStr ? JSON.parse(productsStr) : [];
     const data = await req.formData();
   console.log(data);
   const status = data.get("code");
   const merchantId = data.get("merchantId");
   const transactionId = data.get("transactionId");
+  if (!transactionId) {
+    throw new Error("Transaction ID is missing");
+  }
 
     const keyIndex = 1;
 
@@ -33,8 +43,22 @@ export async function POST(req:Request) {
 
     const response = await axios(options);
 
-    if (response.data.success === true) {
-
+      if (response.data.success === true) {
+        // If payment is successful, update the user's orders
+        if (email) {
+          await dbConnect();
+          const order = {
+            orderId: transactionId.toString(),
+            totalAmount,
+            status: "Placed",
+            placedAt: new Date(),
+            products, // expecting an array of product names or IDs
+          };
+          await User.findOneAndUpdate(
+            { email },
+            { $push: { orders: order } }
+          );
+        }
       
       return NextResponse.redirect("https://hiuri.in/success", {
         status: 301,

@@ -14,6 +14,21 @@ export interface IWalletHistory {
   coins: number;
 }
 
+// New Order interface
+export interface IOrder {
+  orderId: string;
+  products: {
+    productId: mongoose.Schema.Types.ObjectId;
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+  totalAmount: number;
+  status: "Placed" | "Cancelled" | "Delivered" | "Processing";
+  placedAt: Date;
+  cancelledAt?: Date;
+}
+
 export interface IUser extends Document {
   fullName: string;
   email: string;
@@ -27,16 +42,33 @@ export interface IUser extends Document {
     balance: number;
     coins: number;
   };
-  walletHistory?: IWalletHistory[]; // New field for wallet history
+  walletHistory?: IWalletHistory[];
   cart: {
     productId: mongoose.Schema.Types.ObjectId;
     quantity: number;
   }[];
   transactions: ITransaction[];
+  orders?: IOrder[]; // New field for orders
   otp?: string;
   otpExpires?: Date;
   comparePassword(password: string): Promise<boolean>;
 }
+
+const OrderSchema = new Schema<IOrder>({
+  orderId: { type: String, required: true },
+  products: [
+    {
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+      name: { type: String, required: true },
+      quantity: { type: Number, required: true },
+      price: { type: Number, required: true },
+    },
+  ],
+  totalAmount: { type: Number, required: true },
+  status: { type: String, enum: ["Placed", "Cancelled", "Delivered", "Processing"], default: "Placed" },
+  placedAt: { type: Date, default: Date.now },
+  cancelledAt: { type: Date },
+});
 
 const UserSchema = new Schema<IUser>({
   fullName: { type: String, required: true },
@@ -69,6 +101,7 @@ const UserSchema = new Schema<IUser>({
       date: { type: Date, default: Date.now },
     },
   ],
+  orders: [OrderSchema], // Add orders here
   otp: { type: String },
   otpExpires: { type: Date },
 });

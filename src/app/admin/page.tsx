@@ -16,8 +16,24 @@ export default function AdminPage() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [newNotificationTitle, setNewNotificationTitle] = useState("");
   const [newNotificationMessage, setNewNotificationMessage] = useState("");
+  const [offlinePurchases, setOfflinePurchases] = useState<any[]>([]);
+  // Add state for coin earning rate
+const [coinRate, setCoinRate] = useState<number>(50);
+const [newCoinRate, setNewCoinRate] = useState<number>(50);
+
   // Get the email from session, if available.
   const userEmail = session?.user?.email || "";
+
+  // New state for offline purchase form
+  const [offlinePurchaseForm, setOfflinePurchaseForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    amountPaid: "",
+    dueAmount: "",
+    dateOfPayment: "",
+  });
 
   // Check if the current session user is allowed to access the admin page.
   useEffect(() => {
@@ -39,7 +55,7 @@ export default function AdminPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        await Promise.all([fetchUsers(), fetchCategories(), fetchNotifications()]);
+        await Promise.all([fetchUsers(), fetchCategories(), fetchNotifications(), fetchOfflinePurchases()]);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -48,7 +64,34 @@ export default function AdminPage() {
     };
     fetchData();
   }, []);
-
+  useEffect(() => {
+    const fetchCoinRate = async () => {
+      try {
+        const response = await axios.get("/api/coin-earning-rate");
+        setCoinRate(response.data.rate);
+        setNewCoinRate(response.data.rate);
+      } catch (error) {
+        console.error("Failed to fetch coin earning rate", error);
+      }
+    };
+    fetchCoinRate();
+  }, []);
+  
+  // Handler to update coin earning rate
+  const handleUpdateCoinRate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post("/api/coin-earning-rate", { rate: newCoinRate });
+      if (response.data.success) {
+        setCoinRate(response.data.rate);
+        alert("Coin earning rate updated successfully!");
+      }
+    } catch (error) {
+      console.error("Error updating coin earning rate:", error);
+      alert("Failed to update coin earning rate.");
+    }
+  };
+  
   const fetchUsers = async () => {
     try {
       const response = await axios.get("/api/allUser");
@@ -73,6 +116,14 @@ export default function AdminPage() {
       setNotifications(response.data);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
+    }
+  };
+  const fetchOfflinePurchases = async () => {
+    try {
+      const response = await axios.get("/api/offline-purchases");
+      setOfflinePurchases(response.data);
+    } catch (error) {
+      console.error("Failed to fetch offline purchases:", error);
     }
   };
 
@@ -114,6 +165,45 @@ export default function AdminPage() {
       console.error("Error adding notification:", error);
     }
   };
+  // Offline purchase form handlers
+  const handleOfflinePurchaseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setOfflinePurchaseForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddOfflinePurchase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.post("/api/offline-purchases", {
+        ...offlinePurchaseForm,
+        amountPaid: Number(offlinePurchaseForm.amountPaid),
+        dueAmount: offlinePurchaseForm.dueAmount ? Number(offlinePurchaseForm.dueAmount) : 0,
+        dateOfPayment: offlinePurchaseForm.dateOfPayment,
+      });
+      setOfflinePurchaseForm({
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+        amountPaid: "",
+        dueAmount: "",
+        dateOfPayment: "",
+      });
+      fetchOfflinePurchases();
+    } catch (error) {
+      console.error("Error adding offline purchase:", error);
+    }
+  };
+
+  const handleDeleteOfflinePurchase = async (id: string) => {
+    try {
+      await axios.delete(`/api/offline-purchases?id=${id}`);
+      fetchOfflinePurchases();
+    } catch (error) {
+      console.error("Error deleting offline purchase:", error);
+    }
+  };
+
 
   // Handle deleting a notification by ID.
   const handleDeleteNotification = async (notificationId: string) => {
@@ -172,6 +262,26 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto space-y-8">
+      <section className="bg-white rounded-lg shadow-md p-6">
+    <h2 className="text-2xl font-bold mb-6 text-gray-800">Coin Earning Rate</h2>
+    <p className="mb-4">Current Rate: For every ₹{coinRate} spent, you earn 1 coin.</p>
+    <form onSubmit={handleUpdateCoinRate} className="flex flex-col gap-4">
+      <input
+      title="Coin Earning Rate"
+        type="number"
+        value={newCoinRate}
+        onChange={(e) => setNewCoinRate(Number(e.target.value))}
+        min="1"
+        className="p-3 border rounded-md"
+      />
+      <button
+        type="submit"
+        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+      >
+        Update Rate
+      </button>
+    </form>
+  </section>
         {/* Users Section */}
         <section className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-2xl font-bold mb-6 text-gray-800">Users Management</h2>
@@ -313,6 +423,119 @@ export default function AdminPage() {
             </table>
           </div>
         </section>
+        <section className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800">Offline Purchases</h2>
+          <form onSubmit={handleAddOfflinePurchase} className="flex flex-col gap-4 mb-6">
+            <input
+              type="text"
+              name="name"
+              value={offlinePurchaseForm.name}
+              onChange={handleOfflinePurchaseChange}
+              placeholder="Name"
+              className="p-3 border rounded-md"
+              required
+            />
+            <input
+              type="email"
+              name="email"
+              value={offlinePurchaseForm.email}
+              onChange={handleOfflinePurchaseChange}
+              placeholder="Email (optional)"
+              className="p-3 border rounded-md"
+            />
+            <input
+              type="text"
+              name="phone"
+              value={offlinePurchaseForm.phone}
+              onChange={handleOfflinePurchaseChange}
+              placeholder="Phone"
+              className="p-3 border rounded-md"
+              required
+            />
+            <input
+              type="text"
+              name="address"
+              value={offlinePurchaseForm.address}
+              onChange={handleOfflinePurchaseChange}
+              placeholder="Address"
+              className="p-3 border rounded-md"
+              required
+            />
+            <input
+              type="number"
+              name="amountPaid"
+              value={offlinePurchaseForm.amountPaid}
+              onChange={handleOfflinePurchaseChange}
+              placeholder="Amount Paid"
+              className="p-3 border rounded-md"
+              required
+            />
+            <input
+              type="number"
+              name="dueAmount"
+              value={offlinePurchaseForm.dueAmount}
+              onChange={handleOfflinePurchaseChange}
+              placeholder="Due Amount (optional)"
+              className="p-3 border rounded-md"
+            />
+            <input
+            title="Date of Payment"
+              type="date"
+              name="dateOfPayment"
+              value={offlinePurchaseForm.dateOfPayment}
+              onChange={handleOfflinePurchaseChange}
+              className="p-3 border rounded-md"
+              required
+            />
+            <button
+              type="submit"
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+            >
+              Add Offline Purchase
+            </button>
+          </form>
+          {offlinePurchases.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border">
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="px-4 py-2 border">Name</th>
+                    <th className="px-4 py-2 border">Email</th>
+                    <th className="px-4 py-2 border">Phone</th>
+                    <th className="px-4 py-2 border">Address</th>
+                    <th className="px-4 py-2 border">Amount Paid</th>
+                    <th className="px-4 py-2 border">Due Amount</th>
+                    <th className="px-4 py-2 border">Payment Date</th>
+                    <th className="px-4 py-2 border">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {offlinePurchases.map((purchase) => (
+                    <tr key={purchase._id}>
+                      <td className="px-4 py-2 border">{purchase.name}</td>
+                      <td className="px-4 py-2 border">{purchase.email || "-"}</td>
+                      <td className="px-4 py-2 border">{purchase.phone}</td>
+                      <td className="px-4 py-2 border">{purchase.address}</td>
+                      <td className="px-4 py-2 border">₹{purchase.amountPaid}</td>
+                      <td className="px-4 py-2 border">₹{purchase.dueAmount || 0}</td>
+                      <td className="px-4 py-2 border">{new Date(purchase.dateOfPayment).toLocaleDateString()}</td>
+                      <td className="px-4 py-2 border">
+                        <button
+                          onClick={() => handleDeleteOfflinePurchase(purchase._id)}
+                          className="bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p>No offline purchases available.</p>
+          )}
+        </section>
 
         {/* Recent Transactions Section */}
         <section className="bg-white rounded-lg shadow-md p-6">
@@ -354,6 +577,40 @@ export default function AdminPage() {
             </table>
           </div>
         </section>
+
+        {/* Cancelled Orders Section */}
+<section className="bg-white rounded-lg shadow-md p-6 mt-8">
+  <h2 className="text-2xl font-bold text-gray-800 mb-6">Cancelled Orders</h2>
+  <table className="min-w-full border">
+    <thead className="bg-gray-50">
+      <tr>
+        <th className="px-4 py-2 border">User Name</th>
+        <th className="px-4 py-2 border">Email</th>
+        <th className="px-4 py-2 border">Order ID</th>
+        <th className="px-4 py-2 border">Total Amount</th>
+        <th className="px-4 py-2 border">Cancelled At</th>
+      </tr>
+    </thead>
+    <tbody className="divide-y divide-gray-200">
+  {users.flatMap((user) =>
+    (user.orders || []).filter((order: any) => order.status === "Cancelled")
+      .map((order: any) => (
+        <tr key={order.orderId}>
+          <td className="px-4 py-2 border">{user.fullName}</td>
+          <td className="px-4 py-2 border">{user.email}</td>
+          <td className="px-4 py-2 border">{order.orderId}</td>
+          <td className="px-4 py-2 border">₹{order.totalAmount}</td>
+          <td className="px-4 py-2 border">
+            {order.cancelledAt ? new Date(order.cancelledAt).toLocaleString() : "N/A"}
+          </td>
+        </tr>
+      ))
+  )}
+</tbody>
+
+  </table>
+</section>
+
       </div>
     </div>
   );

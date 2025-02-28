@@ -15,7 +15,8 @@ export default function PaymentPage() {
 
   // Helper function to calculate delivery charge
   const getDeliveryCharge = (amount: number): number => {
-    return amount > 300 ? 10 : 13;
+    // return amount > 300 ? 10 : 13;
+    return amount > 300 ? 0 : 0;
   };
 
   useEffect(() => {

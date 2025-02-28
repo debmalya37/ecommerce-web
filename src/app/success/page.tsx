@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import axios from "axios";
-import { useWallet } from "@/hooks/useWallet"; // Import the useWallet hook
+import { useWallet } from "@/hooks/useWallet";
 
 export default function SuccessPage() {
   const [userDetails, setUserDetails] = useState<any>(null);
@@ -11,9 +11,22 @@ export default function SuccessPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const [walletEarned, setWalletEarned] = useState(0);
+  const [coinRate, setCoinRate] = useState<number>(50); // Default to 50
   const { walletBalance } = useWallet(userDetails?.email);
-
   const router = useRouter();
+
+  // Fetch coin earning rate from the API
+  useEffect(() => {
+    const fetchCoinRate = async () => {
+      try {
+        const response = await axios.get("/api/coin-earning-rate");
+        setCoinRate(response.data.rate);
+      } catch (error) {
+        console.error("Failed to fetch coin earning rate", error);
+      }
+    };
+    fetchCoinRate();
+  }, []);
 
   // First effect: retrieve user details, payment source, compute totals, etc.
   useEffect(() => {
@@ -47,7 +60,6 @@ export default function SuccessPage() {
       const transactionId = sessionStorage.getItem("transactionId");
       const rewardGiven = sessionStorage.getItem("rewardGiven");
 
-      // In a valid payment flow, transactionId must be provided.
       if (!transactionId) {
         console.log("No valid transactionId. Skipping transaction record update.");
         return;
@@ -58,9 +70,8 @@ export default function SuccessPage() {
       }
 
       if (originalTotal) {
-        // New reward logic: 1 coin and ₹1 wallet reward for every ₹50 spent.
-        const coinsEarned = Math.floor(originalTotal / 50);
-        // Deduct any wallet amount used.
+        // Use the fetched coin rate instead of hardcoded 50
+        const coinsEarned = Math.floor(originalTotal / coinRate);
         const netChange = coinsEarned - walletUsed;
         setWalletEarned(coinsEarned);
         try {
@@ -73,7 +84,6 @@ export default function SuccessPage() {
           const data = await response.json();
           if (data.success) {
             setWalletEarned(coinsEarned);
-            // Mark reward as given so that wallet is updated only once.
             sessionStorage.setItem("rewardGiven", "true");
           } else {
             console.error("Failed to update wallet:", data.message);
@@ -83,7 +93,6 @@ export default function SuccessPage() {
         }
       }
 
-      // Post the transaction record (no clearing if valid payment flow)
       const purchasedProducts = products.map((p) => p.name);
       const transactionData = {
         email: userDetails.email,
@@ -98,7 +107,6 @@ export default function SuccessPage() {
         console.error("Error adding transaction record:", error);
       }
 
-      // Optionally, if not coming from a valid payment URL, clear sessionStorage fields.
       if (typeof window !== "undefined") {
         const currentUrl = window.location.href;
         if (!currentUrl.includes("sltTkn=") && !currentUrl.includes("/api/status/")) {
@@ -112,88 +120,89 @@ export default function SuccessPage() {
     if (userDetails?.email) {
       addTransactionRecord();
     }
-  }, [userDetails?.email, products, totalAmount]);
+  }, [userDetails?.email, products, totalAmount, coinRate]);
 
-  // PDF Download function
-  const handleDownloadInvoice = () => {
-    const doc = new jsPDF();
 
-    doc.setFontSize(18);
-    doc.text("Invoice", 14, 20);
+// PDF Download function
+const handleDownloadInvoice = () => {
+  const doc = new jsPDF();
 
-    doc.setFontSize(12);
-    doc.text(`Full Name: ${userDetails?.fullName}`, 14, 30);
-    doc.text(`Email: ${userDetails?.email}`, 14, 40);
-    doc.text(`Phone: ${userDetails?.phone}`, 14, 50);
-    doc.text(`Address: ${userDetails?.address}`, 14, 60);
-    doc.text(`Pincode: ${userDetails?.pincode}`, 14, 70);
-    doc.text(`State: ${userDetails?.state}`, 14, 80);
+  doc.setFontSize(18);
+  doc.text("Invoice", 14, 20);
 
-    let yPosition = 90;
-    doc.text("Purchased Items:", 14, yPosition);
+  doc.setFontSize(12);
+  doc.text(`Full Name: ${userDetails?.fullName}`, 14, 30);
+  doc.text(`Email: ${userDetails?.email}`, 14, 40);
+  doc.text(`Phone: ${userDetails?.phone}`, 14, 50);
+  doc.text(`Address: ${userDetails?.address}`, 14, 60);
+  doc.text(`Pincode: ${userDetails?.pincode}`, 14, 70);
+  doc.text(`State: ${userDetails?.state}`, 14, 80);
+
+  let yPosition = 90;
+  doc.text("Purchased Items:", 14, yPosition);
+  yPosition += 10;
+
+  products.forEach((product: any) => {
+    doc.text(
+      `${product.name} - ₹${product.price} x ${product.quantity} = ₹${product.price * product.quantity}`,
+      14,
+      yPosition
+    );
     yPosition += 10;
+  });
 
-    products.forEach((product: any) => {
-      doc.text(
-        `${product.name} - ₹${product.price} x ${product.quantity} = ₹${product.price * product.quantity}`,
-        14,
-        yPosition
-      );
-      yPosition += 10;
-    });
+  doc.text(`Total: ₹${totalAmount}`, 14, yPosition + 10);
+  doc.save("invoice.pdf");
+};
 
-    doc.text(`Total: ₹${totalAmount}`, 14, yPosition + 10);
-    doc.save("invoice.pdf");
-  };
+// PDF Print function
+const handlePrintInvoice = () => {
+  const doc = new jsPDF();
 
-  // PDF Print function
-  const handlePrintInvoice = () => {
-    const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text("Invoice", 14, 20);
 
-    doc.setFontSize(18);
-    doc.text("Invoice", 14, 20);
+  doc.setFontSize(12);
+  let yPosition = 30;
+  doc.text(`Full Name: ${userDetails?.fullName}`, 14, yPosition);
+  yPosition += 10;
+  doc.text(`Email: ${userDetails?.email}`, 14, yPosition);
+  yPosition += 10;
+  doc.text(`Phone: ${userDetails?.phone}`, 14, yPosition);
+  yPosition += 10;
+  doc.text(`Address: ${userDetails?.address}`, 14, yPosition);
+  yPosition += 10;
+  doc.text(`Pincode: ${userDetails?.pincode}`, 14, yPosition);
+  yPosition += 10;
+  doc.text(`State: ${userDetails?.state}`, 14, yPosition);
+  yPosition += 10;
 
-    doc.setFontSize(12);
-    let yPosition = 30;
-    doc.text(`Full Name: ${userDetails?.fullName}`, 14, yPosition);
+  doc.text("Purchased Items:", 14, yPosition);
+  yPosition += 10;
+
+  products.forEach((product: any) => {
+    doc.text(
+      `${product.name} - ₹${product.price} x ${product.quantity} = ₹${product.price * product.quantity}`,
+      14,
+      yPosition
+    );
     yPosition += 10;
-    doc.text(`Email: ${userDetails?.email}`, 14, yPosition);
-    yPosition += 10;
-    doc.text(`Phone: ${userDetails?.phone}`, 14, yPosition);
-    yPosition += 10;
-    doc.text(`Address: ${userDetails?.address}`, 14, yPosition);
-    yPosition += 10;
-    doc.text(`Pincode: ${userDetails?.pincode}`, 14, yPosition);
-    yPosition += 10;
-    doc.text(`State: ${userDetails?.state}`, 14, yPosition);
-    yPosition += 10;
+  });
 
-    doc.text("Purchased Items:", 14, yPosition);
+  doc.text(`Total: ₹${totalAmount}`, 14, yPosition + 10);
+  doc.autoPrint();
+  window.open(doc.output("bloburl"), "_blank");
+
+  const walletUsedValue = Number(sessionStorage.getItem("walletUsed") || "0");
+  if (walletUsedValue > 0) {
     yPosition += 10;
+    doc.text(`Wallet Used: ₹${walletUsedValue}`, 14, yPosition);
+  }
+  yPosition += 10;
+  doc.text(`Coins Earned: ₹${walletEarned}`, 14, yPosition);
 
-    products.forEach((product: any) => {
-      doc.text(
-        `${product.name} - ₹${product.price} x ${product.quantity} = ₹${product.price * product.quantity}`,
-        14,
-        yPosition
-      );
-      yPosition += 10;
-    });
-
-    doc.text(`Total: ₹${totalAmount}`, 14, yPosition + 10);
-    doc.autoPrint();
-    window.open(doc.output("bloburl"), "_blank");
-
-    const walletUsedValue = Number(sessionStorage.getItem("walletUsed") || "0");
-    if (walletUsedValue > 0) {
-      yPosition += 10;
-      doc.text(`Wallet Used: ₹${walletUsedValue}`, 14, yPosition);
-    }
-    yPosition += 10;
-    doc.text(`Coins Earned: ₹${walletEarned}`, 14, yPosition);
-
-    doc.save("invoice.pdf");
-  };
+  doc.save("invoice.pdf");
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">
@@ -207,18 +216,16 @@ export default function SuccessPage() {
           </p>
         )}
         {/* Wallet summary */}
-<div className="bg-purple-100 p-4 rounded-md mb-4">
-  <div className="text-center">
-    <p className="text-green-600 font-semibold">
-      Earned Detergent (kg): {(walletEarned / 1000).toFixed(3)} kg ({walletEarned} gm)
-    </p>
-    <p className="text-sm text-gray-600 mt-1">
-      (For every ₹50 spent, you earn 1 gram of detergent)
-    </p>
-  </div>
-</div>
-
-
+        <div className="bg-purple-100 p-4 rounded-md mb-4">
+          <div className="text-center">
+            <p className="text-green-600 font-semibold">
+              Earned Detergent (kg): {(walletEarned / 1000).toFixed(3)} kg ({walletEarned} gm)
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              (At the current coin rate: For every ₹{coinRate} spent, you earn 1 coin)
+            </p>
+          </div>
+        </div>
         {/* User and purchase details */}
         <div className="space-y-4" id="invoice-content">
           <p><strong>Full Name:</strong> {userDetails?.fullName}</p>
@@ -230,7 +237,6 @@ export default function SuccessPage() {
           <p className="text-2xl font-bold text-purple-700 text-center">
             Total: ₹{totalAmount}
           </p>
-
           <div>
             <h3 className="text-xl font-semibold text-gray-800">Purchased Items</h3>
             <ul className="space-y-2">
@@ -244,7 +250,6 @@ export default function SuccessPage() {
             </ul>
           </div>
         </div>
-
         {/* Invoice buttons */}
         <div className="mt-6 flex space-x-4">
           <button
