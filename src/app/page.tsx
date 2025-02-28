@@ -114,9 +114,9 @@ export default function HomePage() {
       </header>
 
       {/* Categories Section */}
-      <section className="py-8 bg-gradient-to-br from-gray-900 via-blue-950 to-purple-900">
+      <section className="py-8 bg-gradient-to-br from-blue-400 via-gray-300 to-purple-500">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-100 mb-4 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center font-serif">
             Shop by Category
           </h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 ">
@@ -143,9 +143,11 @@ export default function HomePage() {
                     border-2
                     border-cyan-500
                     hover:border-gray-200
+                    font-sans
+                    
                   "
                 >
-                  <p className="text-gray-100 font-semibold break-words max-w-full">
+                  <p className="text-gray-200 font-semibold break-words max-w-full">
                     {cat.name}
                   </p>
                 </span>
@@ -156,9 +158,9 @@ export default function HomePage() {
       </section>
 
      {/* Featured Products Section */}
-<section className="py-12 bg-gradient-to-br from-gray-900 via-blue-950 to-purple-900">
+<section className="py-12 bg-gradient-to-br from-purple-200 via-blue-200 to-purple-200">
   <div className="container mx-auto px-6">
-    <h2 className="text-3xl font-bold text-gray-200 mb-6 text-center">
+    <h2 className="text-3xl font-bold text-gray-950 mb-6 text-center font-serif">
       Featured Products
     </h2>
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">

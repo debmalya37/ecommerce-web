@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShoppingCart, faBell } from "@fortawesome/free-solid-svg-icons";
+import { faShoppingCart, faBell, faClipboardList, faBagShopping } from "@fortawesome/free-solid-svg-icons";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import Image from "next/image";
 
 export default function Navbar() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function Navbar() {
     setIsOpen(!isOpen);
   };
 
-  // Load cart count from localStorage (summing the quantity of each item)
+  // Load cart count from localStorage
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
     const count = savedCart.reduce(
@@ -35,7 +36,6 @@ export default function Navbar() {
     const fetchNotifications = async () => {
       try {
         const response = await axios.get("/api/notifications");
-        // Assume the API returns an array of notifications
         setNotifications(response.data);
         setNotificationCount(response.data.length);
       } catch (error) {
@@ -50,14 +50,11 @@ export default function Navbar() {
     <>
       <nav className="bg-gray-900 text-white shadow-md">
         <div className="container mx-auto p-4 flex items-center justify-between">
-          {/* Mobile: Brand + Notification + (Cart shown next to brand) */}
+          {/* Mobile: Brand + Notification + Cart */}
           <div className="flex items-center space-x-4">
-            {/* Brand Name */}
             <Link href="/">
               <span className="text-xl font-bold">Hiuri</span>
             </Link>
-
-            {/* Mobile Notification Icon (only on mobile) */}
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="relative md:hidden"
@@ -70,8 +67,6 @@ export default function Navbar() {
                 </span>
               )}
             </button>
-
-            {/* Mobile Cart Icon (only on mobile) */}
             <Link href="/cart" className="relative md:hidden" title="View Cart">
               <FontAwesomeIcon icon={faShoppingCart} className="w-6 h-6" />
               {cartCount > 0 && (
@@ -93,10 +88,8 @@ export default function Navbar() {
                   <span className="hover:underline">Profile</span>
                 </Link>
                 <Link href="/profile/orders">
-                  {/* <span className="hover:underline">Orders</span> */}
-                  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAv0lEQVR4nO2WSwoCMRBEcw31QoogpsF72BlG1+KtxFmJ9/Gz0VVJyEodZ2InIoEu6FVDP1KVRRmj+rcs+EhwyDN8iAbng4Yx34KFhsnvkILNuwsxeZYNlqhsMGnGEdKMy/pcEik4c+v43DCirCbwRdowLJaD13sL8Cjs3LkP3CT0qrrFwXUA874TbFFNE3rVjeBWM9RDPx5qwXe/m6OadIID3G0T4C0RuE0v9Pnl3Fi4qwzGJwLvLHgcDVWZH+kBw0Lc2yYZ514AAAAASUVORK5CYII=" alt="purchase-order"/>
+                   <FontAwesomeIcon className="w-6 h-6 justify-center items-center flex" icon={faBagShopping} style={{color: "#f23184",}} />
                 </Link>
-                {/* Notification Icon (desktop) */}
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
                   className="relative"
@@ -109,7 +102,6 @@ export default function Navbar() {
                     </span>
                   )}
                 </button>
-                {/* Cart Icon (desktop) */}
                 <Link href="/cart" className="relative">
                   <FontAwesomeIcon icon={faShoppingCart} className="w-6 h-6 hover:underline" />
                   {cartCount > 0 && (
@@ -152,12 +144,10 @@ export default function Navbar() {
           <div className="md:hidden">
             <button onClick={toggleMenu} className="focus:outline-none">
               {isOpen ? (
-                // Close icon
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
-                // Hamburger icon
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
@@ -173,42 +163,31 @@ export default function Navbar() {
               {session ? (
                 <>
                   <Link href="/products">
-                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">
-                      Products
-                    </span>
+                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">Products</span>
                   </Link>
+                  <Link href="/profile/orders">
+                   <FontAwesomeIcon className="w-5 h-5 justify-center items-center flex" icon={faBagShopping} style={{color: "#f23184",}} />
+                </Link>
                   <Link href="/profile">
-                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">
-                      Profile
-                    </span>
+                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">Profile</span>
                   </Link>
                   <Link href="/contact-us">
-                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">
-                      Contact us
-                    </span>
+                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">Contact us</span>
                   </Link>
                 </>
               ) : (
                 <>
                   <Link href="/products">
-                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">
-                      Products
-                    </span>
+                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">Products</span>
                   </Link>
                   <Link href="/contact-us">
-                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">
-                      Contact us
-                    </span>
+                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">Contact us</span>
                   </Link>
                   <Link href="/login">
-                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">
-                      Login
-                    </span>
+                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">Login</span>
                   </Link>
                   <Link href="/register">
-                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">
-                      Sign Up
-                    </span>
+                    <span className="block px-2 py-1 hover:bg-blue-800 rounded">Sign Up</span>
                   </Link>
                 </>
               )}

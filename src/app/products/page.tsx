@@ -67,7 +67,7 @@ const ProductList = () => {
       {/* Filter Section */}
       <div className="mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex-1">
-          <label htmlFor="category" className="block text-sm font-medium text-gray-300">
+          <label htmlFor="category" className="block text-sm font-medium text-gray-950">
             Category
           </label>
           <select
@@ -85,7 +85,7 @@ const ProductList = () => {
           </select>
         </div>
         <div className="flex-1">
-          <label htmlFor="search" className="block text-sm font-medium text-gray-300">
+          <label htmlFor="search" className="block text-sm font-medium text-gray-950">
             Search Products
           </label>
           <input
@@ -119,7 +119,7 @@ const ProductList = () => {
 
 export default function ProductPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-950 to-purple-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-blue-100 to-purple-100">
       <Suspense fallback={<div className="container mx-auto p-6"><Loader /></div>}>
         <ProductList />
       </Suspense>
