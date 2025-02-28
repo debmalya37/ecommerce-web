@@ -1,7 +1,9 @@
 "use client";
-import axios from "axios";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import jsPDF from "jspdf";
+import axios from "axios";
+import { useWallet } from "@/hooks/useWallet";
 
 export default function PaymentPage() {
   const [userDetails, setUserDetails] = useState<any>(null);
@@ -11,25 +13,32 @@ export default function PaymentPage() {
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletCoins, setWalletCoins] = useState(0);
   const [adjustedTotal, setAdjustedTotal] = useState(0);
+  const [discount, setDiscount] = useState(0);
   const router = useRouter();
 
-  // Helper function to calculate delivery charge
+  // Helper: Calculate delivery charge (you can adjust this logic as needed)
   const getDeliveryCharge = (amount: number): number => {
-    // return amount > 300 ? 10 : 13;
-    return amount > 300 ? 0 : 0;
+    return amount > 300 ? 10 : 13;
   };
 
+  // Helper: Calculate discount based on original total
+  const calculateDiscount = (amount: number): number => {
+    if (amount > 2000) return amount * 0.2;
+    if (amount > 1000) return amount * 0.1;
+    return 0;
+  };
+
+  // Initial setup: fetch user details, wallet info, and calculate totals
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem("userDetails") || "{}");
     setUserDetails(user);
 
     if (!user?.email) {
-      // Redirect to login if no user details found in session
       router.push("/login");
       return;
     }
 
-    // Fetch user wallet details (walletBalance, walletCoins)
+    // Fetch wallet details from your API
     const fetchUserWalletDetails = async () => {
       try {
         const response = await axios.get(`/api/user?email=${user.email}`);
@@ -41,10 +50,9 @@ export default function PaymentPage() {
         console.error("Failed to fetch user wallet details:", error);
       }
     };
-
     fetchUserWalletDetails();
 
-    // Calculate total cart amount from source (cart or buy-now)
+    // Determine total amount from the selected source (cart or buy-now)
     const source = sessionStorage.getItem("source");
     let total = 0;
     if (source === "cart") {
@@ -55,19 +63,23 @@ export default function PaymentPage() {
       total = product.price * product.quantity || 0;
     }
 
-    // Calculate the delivery charge and add it to the total
     const delivery = getDeliveryCharge(total);
     setDeliveryCharge(delivery);
-    const totalWithDelivery = total + delivery;
-    const totalwithoutDelivery = total;
-    setTotalAmount(totalwithoutDelivery);
-    setAdjustedTotal(totalWithDelivery);
+    setTotalAmount(total);
+
+    // Calculate discount based on original total (before delivery)
+    const discountAmount = calculateDiscount(total);
+    setDiscount(discountAmount);
+
+    // Compute adjusted total: total - walletUsed + deliveryCharge - discount
+    setAdjustedTotal(total - walletUsed + delivery - discountAmount);
   }, [router]);
 
+  // Update adjusted total when walletUsed, totalAmount, or deliveryCharge changes
   useEffect(() => {
-    // Adjust total after wallet deduction
-    setAdjustedTotal(totalAmount - walletUsed + deliveryCharge);
-
+    const discountAmount = calculateDiscount(totalAmount);
+    setDiscount(discountAmount);
+    setAdjustedTotal(totalAmount - walletUsed + deliveryCharge - discountAmount);
   }, [walletUsed, totalAmount, deliveryCharge]);
 
   const handleWalletChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,12 +88,12 @@ export default function PaymentPage() {
   };
 
   const handlePayment = async () => {
-    // Remove any previous reward flag so that new payment is processed fresh
+    // Clear any previous reward flag
     sessionStorage.removeItem("rewardGiven");
 
     if (walletUsed > 0) {
       try {
-        // Deduct wallet balance first
+        // Update wallet balance
         const walletUpdateResponse = await axios.post("/api/updateWallet", {
           email: userDetails.email,
           amountUsed: walletUsed,
@@ -91,8 +103,7 @@ export default function PaymentPage() {
           console.error("Wallet update failed:", walletUpdateResponse.data.error);
           return;
         }
-
-        setWalletBalance(walletUpdateResponse.data.newBalance); // Update UI with new balance
+        setWalletBalance(walletUpdateResponse.data.newBalance);
       } catch (error) {
         console.error("Failed to update wallet balance:", error);
         return;
@@ -109,7 +120,7 @@ export default function PaymentPage() {
       });
 
       if (response.data.transactionId) {
-        sessionStorage.setItem("transactionId", response.data.transactionId); // Store transaction ID in session
+        sessionStorage.setItem("transactionId", response.data.transactionId);
       }
 
       if (response.data.redirect) {
@@ -125,18 +136,17 @@ export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">
       <div className="w-full max-w-md bg-white text-gray-800 rounded-lg shadow-lg p-6">
-        <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">
-          Confirm Your Payment
-        </h2>
+        <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">Confirm Your Payment</h2>
         <div className="space-y-4">
-          {/* Wallet Section */}
+          {/* Wallet Section (optional input if you want users to use wallet funds) */}
           <div className="bg-gray-100 p-4 rounded-md">
             <div className="flex justify-between items-center mb-2">
-              {/* <span>Wallet Balance:</span>
-              <span className="font-bold">₹{walletBalance}</span> */}
+              {/* You can show wallet balance here if desired */}
             </div>
             <div className="flex items-center gap-2">
-              {/* <input
+              {/* Uncomment below to allow wallet usage input */}
+              {/*
+              <input
                 type="number"
                 value={walletUsed}
                 onChange={handleWalletChange}
@@ -144,13 +154,14 @@ export default function PaymentPage() {
                 placeholder="Amount to use"
                 min="0"
                 max={Math.min(walletBalance, totalAmount)}
-              /> */}
-              {/* <button
+              />
+              <button
                 onClick={() => setWalletUsed(Math.min(walletBalance, totalAmount))}
                 className="text-sm bg-blue-100 text-blue-600 px-2 py-1 rounded-md hover:bg-blue-200"
               >
                 Use Max
-              </button> */}
+              </button>
+              */}
             </div>
           </div>
 
@@ -163,19 +174,19 @@ export default function PaymentPage() {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span>Original Total:</span>
-              <span>₹{totalAmount}</span>
+              <span>₹{totalAmount.toFixed(2)}</span>
             </div>
-            {/* <div className="flex justify-between">
-              <span>Wallet Used:</span>
-              <span>- ₹{walletUsed}</span>
-            </div> */}
             <div className="flex justify-between">
               <span>Delivery Charge:</span>
-              <span>₹{deliveryCharge}</span>
+              <span>₹{deliveryCharge.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Discount:</span>
+              <span>₹{discount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-bold">
               <span>Payable Amount:</span>
-              <span>₹{adjustedTotal}</span>
+              <span>₹{adjustedTotal.toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -184,7 +195,7 @@ export default function PaymentPage() {
           onClick={handlePayment}
           className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white py-3 px-6 rounded-lg font-semibold w-full mt-6 shadow-md transform hover:scale-105 transition duration-300"
         >
-          Proceed to Payment (₹{adjustedTotal})
+          Proceed to Payment (₹{adjustedTotal.toFixed(2)})
         </button>
       </div>
     </div>
