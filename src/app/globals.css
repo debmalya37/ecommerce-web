@@ -144,3 +144,81 @@ html, body {
 .animate-drive-icon {
   animation: driveIcon 2s infinite ease-in-out;
 }
+
+/* Hide the top banner injected by Google Translate */
+.goog-te-banner-frame.skiptranslate {
+  display: none !important;
+}
+
+/* This ensures the page content is not pushed down */
+body {
+  top: 0px !important;
+}
+
+/* Optionally hide the Google Translate icon in the widget */
+.goog-te-gadget-icon {
+  display: none !important;
+}
+.VIpgJd-ZVi9od-ORHb{
+  display: none !important;
+}
+
+body.VIpgJd-ZVi9od-ORHb{
+  display: none !important;
+}
+
+/* Hide the top banner bar (the injected <iframe>) */
+.goog-te-banner-frame.skiptranslate {
+  display: none !important;
+}
+
+/* Hide the white menu that sometimes appears on the top-left */
+.goog-te-menu-frame.skiptranslate {
+  display: none !important;
+}
+
+/* Ensure the page isn’t pushed down by the hidden bar */
+body {
+  top: 0px !important;
+}
+
+/* Hide Google’s tiny icons in the bottom corner if needed */
+.goog-te-gadget-icon {
+  display: none !important;
+}
+
+/* Remove the tooltip that appears when hovering over translated text */
+.goog-tooltip, .goog-tooltip:hover {
+  display: none !important;
+}
+
+/* Remove the highlight that might appear around translated text */
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.goog-te-banner-frame.skiptranslate {
+  display: none !important;
+}
+.goog-te-menu-frame.skiptranslate {
+  background: #a63a3a;
+}
+body {
+  top: 0px !important;
+}
+.goog-te-gadget-icon {
+  display: none !important;
+}
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+}
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
+
+iframe[id^=":"] {
+  display: none !important;
+}

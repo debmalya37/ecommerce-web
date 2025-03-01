@@ -1,11 +1,15 @@
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import SessionProvider from "@/components/SessionProvider";
 import Footer from "@/components/Footer";
+import { useEffect } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
+
+
 
 export const metadata: Metadata = {
   title: "Hiuri | ecommerce store website",
@@ -22,12 +26,14 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  
   return (
     <html lang="en">
       <head>
         {/* Manifest */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#303031" />
+        
         {/* Apple Touch Icon */}
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
       </head>
@@ -36,7 +42,8 @@ export default function RootLayout({
           <Navbar />
           <main className="flex-grow">{children}</main>
         </SessionProvider>
-          <Footer />
+        <Footer />
+        
       </body>
     </html>
   );

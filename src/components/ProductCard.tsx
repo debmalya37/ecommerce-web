@@ -32,7 +32,11 @@ export default function ProductCard({
   
 
   return (
-    <div className="bg-[#1F2A37] text-white rounded-lg shadow-md p-4 flex flex-col relative transition-transform hover:-translate-y-1 hover:shadow-xl hover:scale-[1.01]">
+    <>
+    <Link
+          href={stock === 0 ? "#" : `/product/${id}`}>
+    
+    <div className="bg-[#e4ecf5] text-white rounded-lg shadow-md p-4 flex flex-col relative transition-transform hover:-translate-y-1 hover:shadow-xl hover:scale-[1.01]">
       {/* Top Row: Discount Badge & Heart Icon */}
       <div className="flex justify-between items-center mb-2">
         {discountLabel && (
@@ -51,14 +55,14 @@ export default function ProductCard({
             fill="currentColor"
             viewBox="0 0 24 24"
             className="w-5 h-5"
-          >
+            >
             <path d="M12 4.248c-3.148-5.376-12-3.733-12 2.944 0 4.696 6.627 10.777 12 15.808 5.373-5.031 12-11.112 12-15.808 0-6.677-8.852-8.32-12-2.944z" />
-          </svg>
+            </svg>
         </button> */}
       </div>
 
       {/* Product Image (aspect-square) */}
-      <div className="relative w-full aspect-square bg-gray-800 rounded-md overflow-hidden flex items-center justify-center">
+      <div className="relative w-full aspect-square bg-gray-200 rounded-md overflow-hidden flex items-center justify-center">
         <img
           src={imageUrl}
           alt={name}
@@ -67,14 +71,14 @@ export default function ProductCard({
         />
         {stock === 0 && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <span className="text-white font-bold">Out of Stock</span>
+            <span className="text-gray-900 font-bold">Out of Stock</span>
           </div>
         )}
       </div>
 
       {/* Product Title & Rating */}
       <div className="mt-3">
-        <h2 className="font-bold text-sm sm:text-base md:text-lg line-clamp-2">
+        <h2 className="font-bold text-sm sm:text-base md:text-lg line-clamp-2 text-gray-800">
           {name}
         </h2>
 
@@ -93,13 +97,13 @@ export default function ProductCard({
               >
                 <path d="M8 .25a.75.75 0 0 1 .67.418l1.66 3.37 3.72.54a.75.75 0 0 1 .416 1.279l-2.69 2.62.63 3.67a.75.75 0 0 1-1.088.79L8 11.347l-3.326 1.75A.75.75 0 0 1 3.586 12.31l.63-3.67-2.69-2.62A.75.75 0 0 1 1.94 4.58l3.72-.54L7.32.668A.75.75 0 0 1 8 .25z" />
               </svg>
-            ))}
-          </div>
-          {/* Rating number & total reviews 
-          <span className="ml-2 text-gray-400">
-            {rating.toFixed(1)} ({totalReviews.toLocaleString()})
-          </span>
-        </div> */}
+              ))}
+              </div>
+              {/* Rating number & total reviews 
+              <span className="ml-2 text-gray-400">
+              {rating.toFixed(1)} ({totalReviews.toLocaleString()})
+              </span>
+              </div> */}
       </div>
 
       {/* Some small badges: e.g. Best Seller, Best Price */}
@@ -111,10 +115,10 @@ export default function ProductCard({
       {/* Price Section */}
       <div className="mt-2">
         <div className="flex items-baseline space-x-2">
-          <span className="text-xl font-bold text-white">
+          <span className="text-xl font-bold text-green-600">
             ₹{price.toLocaleString()}
           </span>
-          <span className="text-sm line-through text-gray-400">
+          <span className="text-sm line-through text-gray-600">
             ₹{originalPrice.toLocaleString()}
           </span>
         </div>
@@ -149,5 +153,7 @@ export default function ProductCard({
         </Link>
       </div>
     </div>
+    </Link>
+            </>
   );
 }

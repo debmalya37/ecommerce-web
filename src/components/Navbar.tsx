@@ -7,6 +7,8 @@ import { faShoppingCart, faBell, faClipboardList, faBagShopping } from "@fortawe
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import Image from "next/image";
+import LanguageToggle from "@/components/LanguageToggle";
+
 
 export default function Navbar() {
   const router = useRouter();
@@ -31,6 +33,13 @@ export default function Navbar() {
     setCartCount(count);
   }, []);
 
+  // useEffect(() => {
+  
+  //   window.googleTranslateElementInit = () => {
+  //    new window.google.translate.TranslateElement({ pageLanguage: 'en' }, 'google_translate_element');
+  //   };
+  
+  //  }, []);
   // Fetch notifications from API
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -55,6 +64,11 @@ export default function Navbar() {
             <Link href="/">
               <span className="text-xl font-bold">Hiuri</span>
             </Link>
+            <LanguageToggle />
+            {/* Language Toggle Button (visible on mobile) */}
+            {/* <div className="md:hidden">
+              <LanguageToggle />
+            </div> */}
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="relative md:hidden"
