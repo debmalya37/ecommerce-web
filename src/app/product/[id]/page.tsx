@@ -10,20 +10,18 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
   const userEmail = session?.user?.email || "";
   const router = useRouter();
-
   const [product, setProduct] = useState<any>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [alreadyInCart, setAlreadyInCart] = useState(false);
-
-  // Zoom state for the modal image
   const [modalZoom, setModalZoom] = useState(1);
-
-  // For detecting double/triple clicks
   const [clickCount, setClickCount] = useState(0);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // State for variant selection (null means no variant selected)
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState<number | null>(null);
 
   // Fetch product details
   useEffect(() => {
@@ -40,47 +38,73 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     if (params.id) fetchProduct();
   }, [params.id]);
 
-  // Check if product is already in cart
+  // When product loads or variant selection changes, check if product is already in cart
   useEffect(() => {
     if (product) {
       const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
-      const exists = cartItems.some((item: any) => item._id === product._id);
+      const exists = cartItems.some((item: any) => 
+        item._id === product._id &&
+        item.variant === (selectedVariantIndex !== null ? product.variants[selectedVariantIndex].color : null)
+      );
       setAlreadyInCart(exists);
     }
-  }, [product]);
+  }, [product, selectedVariantIndex]);
 
   if (loading) return <Loader />;
   if (!product) return <p className="text-center mt-10 text-red-500">Product not found</p>;
 
-  // Add to cart logic
+  // Compute active images and stock based on variant selection.
+  // If a variant is selected, use its images and stock; otherwise, use the product’s defaults.
+  const activeImages =
+    selectedVariantIndex !== null && product.variants && product.variants.length > selectedVariantIndex
+      ? product.variants[selectedVariantIndex].images
+      : product.images;
+
+  const activeStock =
+    selectedVariantIndex !== null && product.variants && product.variants.length > selectedVariantIndex
+      ? product.variants[selectedVariantIndex].stock
+      : product.stock;
+
+  const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+
+  // Handle Add to Cart with variant details
   const handleAddToCart = () => {
     if (alreadyInCart) return;
     const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
-    const newProduct = {
+    const productToAdd = {
       _id: product._id,
       name: product.name,
       quantity,
       price: product.price,
+      variant: selectedVariantIndex !== null ? product.variants[selectedVariantIndex].color : null,
     };
-    cartItems.push(newProduct);
+    cartItems.push(productToAdd);
     localStorage.setItem("cart", JSON.stringify(cartItems));
     setAlreadyInCart(true);
     window.location.reload();
   };
 
-  // Buy Now logic
+  // Handle Buy Now with variant details
   const handleBuyNow = () => {
-    sessionStorage.setItem("selectedProduct", JSON.stringify({ ...product, quantity }));
+    const productToBuy = {
+      ...product,
+      quantity,
+      variant: selectedVariantIndex !== null ? product.variants[selectedVariantIndex].color : null,
+      images: activeImages,
+      stock: activeStock,
+    };
+    sessionStorage.setItem("selectedProduct", JSON.stringify(productToBuy));
     sessionStorage.setItem("source", "buy-now");
     router.push("/userBillingDetails");
   };
 
-  // Image navigation
+  // Image navigation using activeImages
   const handleNextImage = () => {
-    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % product.images.length);
+    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % activeImages.length);
   };
+
   const handlePrevImage = () => {
-    setCurrentImageIndex((prevIndex) => (prevIndex - 1 + product.images.length) % product.images.length);
+    setCurrentImageIndex((prevIndex) => (prevIndex - 1 + activeImages.length) % activeImages.length);
   };
 
   // Modal controls
@@ -90,75 +114,60 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     setClickCount(0);
     if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
   };
+
   const closeModal = () => setIsModalOpen(false);
 
   // Quantity controls
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1));
 
-  // Detect double/triple clicks in modal
+  // Custom click handler for modal image (double-click zoom in, triple-click reset)
   const handleModalImageClick = () => {
     setClickCount((prevCount) => {
       const newCount = prevCount + 1;
       if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
-
-      // 300ms to determine if user is double or triple clicking
       clickTimerRef.current = setTimeout(() => {
         if (newCount === 2) {
-          // Double-click => zoom in to 130%
           setModalZoom(1.3);
         } else if (newCount >= 3) {
-          // Triple-click => reset to 100%
           setModalZoom(1);
         }
         setClickCount(0);
       }, 300);
-
       return newCount;
     });
   };
-
-  // Basic discount logic for demonstration
-  const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+   
 
   return (
     <div className="bg-[#1F2A37] text-white min-h-screen flex flex-col">
       <div className="container mx-auto p-4 flex-1">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left: Images */}
+          {/* Left: Images and Variants */}
           <div className="space-y-4">
-            {/* Main Image with Zoom Popup (click => open modal) */}
             <div className="relative cursor-pointer" onClick={openModal}>
               <ImageZoomWithPopup
-                src={product.images[currentImageIndex]}
+                src={activeImages[currentImageIndex]}
                 alt={product.name}
                 containerClassName="w-full h-64 sm:h-80 md:h-96 bg-[#2B3A4A] rounded-lg shadow-md flex items-center justify-center overflow-hidden"
                 zoomLevel={2}
               />
-              {/* Navigation arrows */}
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePrevImage();
-                }}
+                onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
                 className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-3 rounded-full hover:bg-gray-600"
               >
                 &lt;
               </button>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNextImage();
-                }}
+                onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-3 rounded-full hover:bg-gray-600"
               >
                 &gt;
               </button>
             </div>
-
             {/* Thumbnail strip */}
             <div className="flex space-x-3 bg-[#2B3A4A] p-2 rounded-md overflow-x-auto">
-              {product.images.map((img: string, idx: number) => (
+              {activeImages.map((img: string, idx: number) => (
                 <img
                   key={idx}
                   src={img}
@@ -170,35 +179,56 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                 />
               ))}
             </div>
+            {/* Variant selection */}
+            {product.variants && product.variants.length > 0 && (
+              <div className="mt-4">
+                <p className="font-semibold text-gray-300 mb-2">Available Colors:</p>
+                <div className="flex space-x-3">
+                  {product.variants.map((variant: any, idx: number) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setSelectedVariantIndex(idx);
+                        setCurrentImageIndex(0);
+                      }}
+                      className={`px-3 py-1 rounded-md transition ${
+                        selectedVariantIndex === idx
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-300 text-gray-800 hover:bg-blue-500 hover:text-white"
+                      }`}
+                    >
+                      {variant.color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Right: Product Info */}
-          <div className="flex flex-col space-y-4 bg-[#2B3A4A] p-6 rounded-lg shadow-md">
-            {/* Discount badge if any */}
+          {/* Right: Product Details */}
+          <div className="space-y-6 bg-[#2B3A4A] p-6 rounded-lg shadow-md">
             {discountPercent > 0 && (
               <div className="text-xs inline-block bg-blue-600 text-white px-2 py-1 rounded-full self-start">
                 Up to {discountPercent}% off
               </div>
             )}
-
-            {/* Title */}
             <h1 className="text-3xl font-bold text-white">{product.name}</h1>
-
-            {/* Price and discount info */}
             <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-extrabold text-green-400">₹{product.price.toLocaleString()}</span>
+              <span className="text-2xl font-extrabold text-green-400">
+                ₹{product.price.toLocaleString()}
+              </span>
               <span className="text-sm font-bold text-gray-400">MRP:</span>
-              <span className="text-sm line-through text-gray-400">₹{product.originalPrice.toLocaleString()}</span>
+              <span className="text-sm line-through text-gray-400">
+                ₹{product.originalPrice.toLocaleString()}
+              </span>
               {discountPercent > 0 && (
                 <span className="text-sm font-semibold text-yellow-300">
                   ↓{discountPercent}%
                 </span>
               )}
             </div>
-
-            {/* Stock / "Hot Deal" label */}
             <div className="flex items-center space-x-2">
-              {product.stock > 0 ? (
+              {activeStock > 0 ? (
                 <span className="bg-purple-600 text-white text-sm font-bold px-3 py-2 rounded-full">
                   Hot Deal
                 </span>
@@ -208,14 +238,10 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                 </span>
               )}
             </div>
-
-            {/* Description */}
             <p className="text-sm text-gray-200 leading-relaxed">
               {product.description}
             </p>
-
-            {/* Quantity selection (if in stock) */}
-            {product.stock > 0 && (
+            {activeStock > 0 && (
               <div className="flex items-center space-x-4">
                 <label htmlFor="quantity" className="text-sm font-semibold text-gray-300">
                   Quantity:
@@ -230,9 +256,9 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                   <span className="text-lg font-bold">{quantity}</span>
                   <button
                     onClick={incrementQuantity}
-                    disabled={quantity >= product.stock}
+                    disabled={quantity >= activeStock}
                     className={`px-3 py-1 rounded text-white ${
-                      quantity < product.stock ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 cursor-not-allowed"
+                      quantity < activeStock ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 cursor-not-allowed"
                     }`}
                   >
                     +
@@ -240,14 +266,12 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                 </div>
               </div>
             )}
-
-            {/* Action Buttons */}
             <div className="fixed bottom-0 left-0 right-0 mt-auto flex space-x-3 pt-3 shadow-md z-50 md:relative md:mt-4 md:flex md:space-x-4 md:mr-1 md:ml-1">
               <button
                 onClick={handleAddToCart}
-                disabled={alreadyInCart || product.stock === 0}
+                disabled={alreadyInCart || activeStock === 0}
                 className={`flex-1 inline-flex items-center justify-center text-sm font-semibold px-4 py-2 rounded-md transition ${
-                  product.stock === 0 || alreadyInCart
+                  activeStock === 0 || alreadyInCart
                     ? "bg-gray-600 text-gray-300 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700 text-white"
                 }`}
@@ -268,12 +292,11 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                   </>
                 )}
               </button>
-
               <button
                 onClick={handleBuyNow}
-                disabled={product.stock === 0}
+                disabled={activeStock === 0}
                 className={`flex-1 inline-flex items-center justify-center text-sm font-semibold px-4 py-2 rounded-md transition ${
-                  product.stock === 0
+                  activeStock === 0
                     ? "bg-gray-600 text-gray-300 cursor-not-allowed"
                     : "bg-orange-500 hover:bg-orange-600 text-white"
                 }`}
@@ -285,7 +308,6 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* Fullscreen Modal for the image */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div
@@ -301,9 +323,9 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
             >
               &times;
             </button>
-            <div className="flex justify-center">
+            <div className="flex justify-center" onClick={handleModalImageClick}>
               <img
-                src={product.images[currentImageIndex]}
+                src={activeImages[currentImageIndex]}
                 alt={product.name}
                 style={{ transform: `scale(${modalZoom})`, transition: "transform 0.2s ease" }}
                 className="max-w-full max-h-full object-contain"
@@ -317,6 +339,4 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
       )}
     </div>
   );
-
-  
 }
