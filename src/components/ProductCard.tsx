@@ -36,7 +36,7 @@ export default function ProductCard({
     <Link
           href={stock === 0 ? "#" : `/product/${id}`}>
     
-    <div className="bg-[#e4ecf5] text-white rounded-lg shadow-md p-4 flex flex-col relative transition-transform hover:-translate-y-1 hover:shadow-xl hover:scale-[1.01]">
+    <div className="bg-[#e4ecf5] text-white rounded-lg shadow-sm shadow-gray-800 p-4 flex flex-col relative transition-transform hover:-translate-y-1 hover:shadow-2xl hover:scale-[1.01] hover:shadow-gray-800">
       {/* Top Row: Discount Badge & Heart Icon */}
       <div className="flex justify-between items-center mb-2">
         {discountLabel && (
