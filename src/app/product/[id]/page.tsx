@@ -8,7 +8,6 @@ import ImageZoomWithPopup from "@/components/ImageZoomWithPopUp";
 
 export default function ProductDetails({ params }: { params: { id: string } }) {
   const { data: session } = useSession();
-  const userEmail = session?.user?.email || "";
   const router = useRouter();
   const [product, setProduct] = useState<any>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -20,10 +19,10 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   const [clickCount, setClickCount] = useState(0);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // State for variant selection (null means no variant selected)
+  // State for variant selection; null means no variant is selected.
   const [selectedVariantIndex, setSelectedVariantIndex] = useState<number | null>(null);
 
-  // Fetch product details
+  // Fetch product details from API
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -38,11 +37,11 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     if (params.id) fetchProduct();
   }, [params.id]);
 
-  // When product loads or variant selection changes, check if product is already in cart
+  // Check if product (with the selected variant, if any) is already in cart
   useEffect(() => {
     if (product) {
       const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
-      const exists = cartItems.some((item: any) => 
+      const exists = cartItems.some((item: any) =>
         item._id === product._id &&
         item.variant === (selectedVariantIndex !== null ? product.variants[selectedVariantIndex].color : null)
       );
@@ -53,13 +52,11 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   if (loading) return <Loader />;
   if (!product) return <p className="text-center mt-10 text-red-500">Product not found</p>;
 
-  // Compute active images and stock based on variant selection.
-  // If a variant is selected, use its images and stock; otherwise, use the product’s defaults.
+  // Determine active images and stock based on variant selection
   const activeImages =
     selectedVariantIndex !== null && product.variants && product.variants.length > selectedVariantIndex
       ? product.variants[selectedVariantIndex].images
       : product.images;
-
   const activeStock =
     selectedVariantIndex !== null && product.variants && product.variants.length > selectedVariantIndex
       ? product.variants[selectedVariantIndex].stock
@@ -67,7 +64,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
 
   const discountPercent = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
 
-  // Handle Add to Cart with variant details
+  // Add to cart including variant details (if selected)
   const handleAddToCart = () => {
     if (alreadyInCart) return;
     const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -84,7 +81,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
     window.location.reload();
   };
 
-  // Handle Buy Now with variant details
+  // Buy Now includes variant details (if selected)
   const handleBuyNow = () => {
     const productToBuy = {
       ...product,
@@ -102,26 +99,24 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   const handleNextImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex + 1) % activeImages.length);
   };
-
   const handlePrevImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex - 1 + activeImages.length) % activeImages.length);
   };
 
-  // Modal controls
+  // Modal controls for full-screen image with zoom
   const openModal = () => {
     setIsModalOpen(true);
     setModalZoom(1);
     setClickCount(0);
     if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
   };
-
   const closeModal = () => setIsModalOpen(false);
 
   // Quantity controls
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   const decrementQuantity = () => setQuantity((prev) => Math.max(1, prev - 1));
 
-  // Custom click handler for modal image (double-click zoom in, triple-click reset)
+  // Custom click handler for modal image: double-click for 130% zoom, triple-click resets zoom
   const handleModalImageClick = () => {
     setClickCount((prevCount) => {
       const newCount = prevCount + 1;
@@ -137,13 +132,22 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
       return newCount;
     });
   };
-   
+
+  // Variant selection toggle: if the same variant is clicked again, unselect it.
+  const handleVariantToggle = (idx: number) => {
+    if (selectedVariantIndex === idx) {
+      setSelectedVariantIndex(null); // Unselect if already selected
+    } else {
+      setSelectedVariantIndex(idx);
+    }
+    setCurrentImageIndex(0); // Reset image index when variant changes
+  };
 
   return (
     <div className="bg-[#1F2A37] text-white min-h-screen flex flex-col">
       <div className="container mx-auto p-4 flex-1">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left: Images and Variants */}
+          {/* Left: Images and Variant Thumbnails */}
           <div className="space-y-4">
             <div className="relative cursor-pointer" onClick={openModal}>
               <ImageZoomWithPopup
@@ -180,32 +184,31 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
               ))}
             </div>
             {/* Variant selection */}
-            {product.variants && product.variants.length > 0 && (
-              <div className="mt-4">
-                <p className="font-semibold text-gray-300 mb-2">Available Colors:</p>
-                <div className="flex space-x-3">
-                  {product.variants.map((variant: any, idx: number) => (
+            <div className="mt-4">
+              <p className="font-semibold text-gray-300 mb-2">Available Colors:</p>
+              <div className="flex space-x-3">
+                {product.variants && product.variants.length > 0 ? (
+                  product.variants.map((variant: any, idx: number) => (
                     <button
                       key={idx}
-                      onClick={() => {
-                        setSelectedVariantIndex(idx);
-                        setCurrentImageIndex(0);
-                      }}
+                      onClick={() => handleVariantToggle(idx)}
                       className={`px-3 py-1 rounded-md transition ${
                         selectedVariantIndex === idx
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-300 text-gray-800 hover:bg-blue-500 hover:text-white"
+                          ? "bg-gray-400 text-gray-900 border-2 border-gray-950 shadow-md"
+                          : "bg-gray-300 text-gray-950 hover:bg-gray-950 hover:text-white shadow-2xl"
                       }`}
                     >
                       {variant.color}
                     </button>
-                  ))}
-                </div>
+                  ))
+                ) : (
+                  <span className="px-3 py-1 rounded-md bg-gray-300 text-gray-800">None</span>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
-          {/* Right: Product Details */}
+          {/* Right: Product Details and Actions */}
           <div className="space-y-6 bg-[#2B3A4A] p-6 rounded-lg shadow-md">
             {discountPercent > 0 && (
               <div className="text-xs inline-block bg-blue-600 text-white px-2 py-1 rounded-full self-start">
@@ -258,7 +261,9 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                     onClick={incrementQuantity}
                     disabled={quantity >= activeStock}
                     className={`px-3 py-1 rounded text-white ${
-                      quantity < activeStock ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 cursor-not-allowed"
+                      quantity < activeStock
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-gray-500 cursor-not-allowed"
                     }`}
                   >
                     +
@@ -291,7 +296,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
                     Add to Cart
                   </>
                 )}
-              </button>
+                </button>
               <button
                 onClick={handleBuyNow}
                 disabled={activeStock === 0}
@@ -308,6 +313,7 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
         </div>
       </div>
 
+      {/* Modal for Full-Size Image with Zoom */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div
