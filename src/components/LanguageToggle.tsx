@@ -73,9 +73,9 @@ const LanguageToggle: React.FC = () => {
       setIsHindi(false);
     }
     // Wait a short moment to ensure cookie is set, then reload
-    setTimeout(() => {
-      window.location.reload();
-    }, 300);
+    // setTimeout(() => {
+    //   window.location.reload();
+    // }, 300);
   };
 
   return (
