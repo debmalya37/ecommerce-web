@@ -8,7 +8,6 @@ declare global {
   }
 }
 
-// Utility functions to get/set cookies
 function getCookie(name: string): string {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -16,23 +15,22 @@ function getCookie(name: string): string {
 }
 
 function setCookie(name: string, value: string) {
-  // You can add expiry or domain settings here if needed.
   document.cookie = `${name}=${value}; path=/;`;
 }
 
 const LanguageToggle: React.FC = () => {
-  // isHindi: true means page is currently translated to Hindi
+  // isHindi: true means the page is currently translated to Hindi
   const [isHindi, setIsHindi] = useState(false);
 
   useEffect(() => {
-    // Check cookie on mount to see if translation is set to Hindi
+    // On mount, check if the "googtrans" cookie is set to Hindi ("/en/hi")
     if (getCookie("googtrans") === "/en/hi") {
       setIsHindi(true);
     } else {
       setIsHindi(false);
     }
 
-    // Load Google Translate script if it's not already loaded
+    // Dynamically load Google Translate script if not present
     const addGoogleTranslateScript = () => {
       if (!document.getElementById("google-translate-script")) {
         const script = document.createElement("script");
@@ -49,7 +47,7 @@ const LanguageToggle: React.FC = () => {
       new window.google.translate.TranslateElement(
         {
           pageLanguage: "en",
-          includedLanguages: "en,hi",
+          includedLanguages: "en,hi", // Only English and Hindi
           layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
           autoDisplay: false,
         },
@@ -61,26 +59,24 @@ const LanguageToggle: React.FC = () => {
   }, []);
 
   const toggleLanguage = () => {
-    // Toggle the cookie value and update state
+    // When toggling, use the correct cookie values:
+    // "/en/hi" for Hindi and "/en/en" for English.
     if (isHindi) {
       setCookie("googtrans", "/en/en");
       setIsHindi(false);
-    } else if  (isHindi === false) {
-      setCookie("googtrans", "/hi/hi");
-      setIsHindi(true);
     } else {
-      setCookie("googtrans", "/en/en");
-      setIsHindi(false);
+      setCookie("googtrans", "/en/hi");
+      setIsHindi(true);
     }
-    // Wait a short moment to ensure cookie is set, then reload
-    // setTimeout(() => {
-    //   window.location.reload();
-    // }, 300);
+    // Wait a short moment to ensure the cookie is set, then reload.
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
   };
 
   return (
     <>
-      {/* Required hidden element by Google Translate */}
+      {/* Hidden element required by Google Translate */}
       <div id="google_translate_element" style={{ display: "none" }}></div>
       {/* Animated Toggle Switch */}
       <button
@@ -100,7 +96,6 @@ const LanguageToggle: React.FC = () => {
         .notranslate {
           translate: no !important;
         }
-        /* Hide Google Translate banner and tooltips */
         .goog-te-banner-frame.skiptranslate,
         .goog-te-menu-frame.skiptranslate {
           display: none !important;
