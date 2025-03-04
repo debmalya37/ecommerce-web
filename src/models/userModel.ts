@@ -54,6 +54,7 @@ export interface IUser extends Document {
   comparePassword(password: string): Promise<boolean>;
 }
 
+// In your order schema (e.g., in userModel.ts)
 const OrderSchema = new Schema<IOrder>({
   orderId: { type: String, required: true },
   products: [
@@ -65,7 +66,12 @@ const OrderSchema = new Schema<IOrder>({
     },
   ],
   totalAmount: { type: Number, required: true },
-  status: { type: String, enum: ["Placed", "Cancelled", "Delivered", "Processing"], default: "Placed" },
+  // Extended enum for additional statuses
+  status: { 
+    type: String, 
+    enum: ["Placed", "Cancelled", "Delivered", "Processing", "Shifted", "Out for Delivery", "Refund"],
+    default: "Placed"
+  },
   placedAt: { type: Date, default: Date.now },
   cancelledAt: { type: Date },
 });

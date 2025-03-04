@@ -16,6 +16,8 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [gifts, setGifts] = useState([]);
+
   const [formData, setFormData] = useState({
     phone: "",
     address: "",
@@ -63,6 +65,25 @@ export default function Profile() {
     };
     fetchNotifications();
   }, []);
+
+
+  // Fetch gifts for the user
+useEffect(() => {
+  const fetchGifts = async () => {
+    try {
+      const response = await axios.get(`/api/gifts?recipientEmail=${user.email}`);
+      if (response.data.success) {
+        setGifts(response.data.gifts);
+      }
+    } catch (err) {
+      console.error("Failed to fetch gifts", err);
+    }
+  };
+  if (user?.email) {
+    fetchGifts();
+  }
+}, [user]);
+  
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -259,6 +280,24 @@ export default function Profile() {
           Keep shopping for more Gift!
         </p>
       </div>
+                                <div className="mt-6 p-4 bg-green-100 rounded-lg text-center">
+                            <h3 className="text-xl font-bold text-green-800">Gifts Recievables</h3>
+                            {gifts.length > 0 ? (
+                              <div className="mt-2">
+                                {gifts.map((gift: any) => (
+                                  <div key={gift._id} className="border p-2 rounded mb-2 text-left">
+                                    <p className="font-semibold">Gift Details:</p>
+                                    <pre className="whitespace-pre-wrap">{gift.giftDetails}</pre>
+                                    <p>Status: {gift.status}</p>
+                                    <p>Sent on: {new Date(gift.createdAt).toLocaleString()}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-gray-700 mt-2">No gifts received yet.</p>
+                            )}
+                          </div>
+
 
       {/* Delivery Notifications Section */}
       <div className="mt-8">

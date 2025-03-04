@@ -9,6 +9,7 @@ export interface IOfflinePurchase extends Document {
   amountPaid: number;
   dueAmount?: number;
   dateOfPayment: Date;
+  coinsEarned: number; // <-- New field for wallet coin earning
 }
 
 const OfflinePurchaseSchema = new Schema<IOfflinePurchase>(
@@ -20,6 +21,7 @@ const OfflinePurchaseSchema = new Schema<IOfflinePurchase>(
     amountPaid: { type: Number, required: true },
     dueAmount: { type: Number, default: 0 },
     dateOfPayment: { type: Date, required: true },
+    coinsEarned: { type: Number, default: 0 }, // Default to 0 if not calculated
   },
   { timestamps: true }
 );

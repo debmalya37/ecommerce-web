@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import jsPDF from "jspdf";
 import axios from "axios";
 import { useWallet } from "@/hooks/useWallet";
 
@@ -14,18 +13,34 @@ export default function PaymentPage() {
   const [walletCoins, setWalletCoins] = useState(0);
   const [adjustedTotal, setAdjustedTotal] = useState(0);
   const [discount, setDiscount] = useState(0);
+  const [offers, setOffers] = useState<any[]>([]);
   const router = useRouter();
 
   // Helper: Calculate delivery charge (you can adjust this logic as needed)
-  const getDeliveryCharge = (amount: number): number => {
-    return amount > 300 ? 10 : 13;
-  };
+  const getDeliveryCharge = (amount: number): number => (amount > 300 ? 10 : 13);
 
-  // Helper: Calculate discount based on original total
+  // Fetch active offers
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const response = await axios.get("/api/offers");
+        if (response.data.success) {
+          setOffers(response.data.offers);
+        }
+      } catch (error) {
+        console.error("Failed to fetch offers:", error);
+      }
+    };
+    fetchOffers();
+  }, []);
+
+  // Updated calculateDiscount function based on offers
   const calculateDiscount = (amount: number): number => {
-    if (amount > 2000) return amount * 0.2;
-    if (amount > 1000) return amount * 0.1;
-    return 0;
+    if (offers.length === 0) return 0;
+    // Sort offers descending by cutoff
+    const sortedOffers = [...offers].sort((a, b) => b.cutoff - a.cutoff);
+    const applicableOffer = sortedOffers.find((offer) => amount >= offer.cutoff);
+    return applicableOffer ? amount * (applicableOffer.discountPercentage / 100) : 0;
   };
 
   // Initial setup: fetch user details, wallet info, and calculate totals
@@ -67,20 +82,20 @@ export default function PaymentPage() {
     setDeliveryCharge(delivery);
     setTotalAmount(total);
 
-    // Calculate discount based on original total (before delivery)
+    // Calculate discount based on offers
     const discountAmount = calculateDiscount(total);
     setDiscount(discountAmount);
 
     // Compute adjusted total: total - walletUsed + deliveryCharge - discount
     setAdjustedTotal(total - walletUsed + delivery - discountAmount);
-  }, [router]);
+  }, [router, offers]);
 
-  // Update adjusted total when walletUsed, totalAmount, or deliveryCharge changes
+  // Update adjusted total when walletUsed, totalAmount, deliveryCharge, or offers change
   useEffect(() => {
     const discountAmount = calculateDiscount(totalAmount);
     setDiscount(discountAmount);
     setAdjustedTotal(totalAmount - walletUsed + deliveryCharge - discountAmount);
-  }, [walletUsed, totalAmount, deliveryCharge]);
+  }, [walletUsed, totalAmount, deliveryCharge, offers]);
 
   const handleWalletChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.min(Number(e.target.value), walletBalance, totalAmount);
@@ -88,12 +103,11 @@ export default function PaymentPage() {
   };
 
   const handlePayment = async () => {
-    // Clear any previous reward flag
-    sessionStorage.removeItem("rewardGiven");
+    sessionStorage.setItem("originalTotal", totalAmount.toString());
+    sessionStorage.setItem("walletUsed", walletUsed.toString());
 
     if (walletUsed > 0) {
       try {
-        // Update wallet balance
         const walletUpdateResponse = await axios.post("/api/updateWallet", {
           email: userDetails.email,
           amountUsed: walletUsed,
@@ -109,9 +123,6 @@ export default function PaymentPage() {
         return;
       }
     }
-
-    sessionStorage.setItem("originalTotal", totalAmount.toString());
-    sessionStorage.setItem("walletUsed", walletUsed.toString());
 
     try {
       const response = await axios.post("/api/phonepe-payment", {
@@ -141,7 +152,7 @@ export default function PaymentPage() {
           {/* Wallet Section (optional input if you want users to use wallet funds) */}
           <div className="bg-gray-100 p-4 rounded-md">
             <div className="flex justify-between items-center mb-2">
-              {/* You can show wallet balance here if desired */}
+              {/* Optionally display wallet balance */}
             </div>
             <div className="flex items-center gap-2">
               {/* Uncomment below to allow wallet usage input */}

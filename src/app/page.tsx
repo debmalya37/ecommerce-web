@@ -1,12 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import Image from "next/image";
 import heroImg from "../../public/images/hero.jpg";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { PiBroomLight } from "react-icons/pi";
+import { LuStore } from "react-icons/lu";
+import {
+  FaSoap,
+  FaBath,
+  FaTshirt,
+  FaBroom,
+  FaWater,
+  FaBoxOpen,
+  FaRecycle,
+  FaTruck,
+  FaShoppingBag,
+  FaStore,
+} from "react-icons/fa";
+
+
+import { GiSoap } from "react-icons/gi";
+import { FaJugDetergent } from "react-icons/fa6";
+import { BsFillLampFill } from "react-icons/bs";
+
+import { TbBrandTorchain } from "react-icons/tb";
+
+// Define a mapping for static icons
+const iconMapping: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+  FaSoap,
+    GiSoap,
+    FaBath,
+    FaBroom,
+    FaWater,
+    FaBoxOpen,
+    FaRecycle,
+    FaTruck,
+    FaShoppingBag,
+    FaStore,
+    FaJugDetergent,
+    PiBroomLight,
+    BsFillLampFill,
+    TbBrandTorchain,
+};
 
 export default function HomePage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -113,49 +152,70 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Categories Section */}
-      <section className="py-8 bg-gradient-to-br from-blue-400 via-gray-300 to-purple-500">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center font-serif">
-            Shop by Category
-          </h2>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 ">
-            {categories.map((cat) => (
-              <Link
-                key={cat._id}
-                href={`/products?category=${encodeURIComponent(cat.name)}`}
-              >
-                <span
-                  className="
-                    block 
-                    bg-[#331f62] 
-                    rounded-lg 
-                    shadow 
-                    p-4 
-                    text-center 
-                    hover:shadow-lg 
-                    transition 
-                    min-h-[80px] 
-                    flex 
-                    items-center 
-                    justify-center
-                    text-white
-                    border-2
-                    border-cyan-500
-                    hover:border-gray-200
-                    font-sans
-                    
-                  "
+       {/* Categories Section */}
+       <section className="py-8 bg-gradient-to-br from-blue-400 via-gray-300 to-purple-500">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center font-serif">
+              Shop by Category
+            </h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+              {categories.map((cat) => (
+                <Link
+                  key={cat._id}
+                  href={`/products?category=${encodeURIComponent(cat.name)}`}
                 >
-                  <p className="text-gray-200 font-semibold break-words max-w-full">
-                    {cat.name}
-                  </p>
-                </span>
-              </Link>
-            ))}
+                  <span
+                    className="
+                      block 
+                      bg-[#331f62] 
+                      rounded-lg 
+                      shadow 
+                      p-4 
+                      text-center 
+                      hover:shadow-lg 
+                      transition 
+                      min-h-[100px] 
+                      flex 
+                      flex-col 
+                      items-center 
+                      justify-center
+                      text-white
+                      border-2
+                      border-cyan-500
+                      hover:border-gray-200
+                      font-sans
+                    "
+                  >
+                    {/* Icon display */}
+                    {cat.icon ? (
+                      iconMapping[cat.icon] ? (
+                        // If the icon is one of our static identifiers, render it with an optional color
+                        React.createElement(iconMapping[cat.icon], {
+                          className: "w-10 h-10",
+                          style: { color: cat.iconColor || "#fff" },
+                        })
+                      ) : (
+                        // Otherwise assume it's a URL and render an image
+                        <img
+                          src={cat.icon}
+                          alt={cat.name}
+                          className="w-10 h-10 object-contain"
+                        />
+                      )
+                    ) : (
+                      <span className="w-10 h-10 flex items-center justify-center text-xl">
+                        <LuStore />
+                      </span>
+                    )}
+                    <p className="mt-2 text-gray-200 font-semibold break-words max-w-full">
+                      {cat.name}
+                    </p>
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
      {/* Featured Products Section */}
 <section className="py-12 bg-gradient-to-br from-purple-200 via-blue-200 to-purple-200">

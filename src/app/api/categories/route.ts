@@ -19,9 +19,11 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
-    const { name } = await req.json();
+    const { name, icon, iconColor } = await req.json();
     
-    if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    if (!name) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
 
     const slug = name.toLowerCase().replace(/\s+/g, '-');
     
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Category already exists" }, { status: 400 });
     }
 
-    const newCategory = new Category({ name, slug });
+    const newCategory = new Category({ name, slug, icon, iconColor });
     await newCategory.save();
 
     return NextResponse.json({ success: true, category: newCategory });

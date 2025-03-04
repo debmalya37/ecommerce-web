@@ -8,6 +8,7 @@ declare global {
   }
 }
 
+// Utility functions to get/set cookies
 function getCookie(name: string): string {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -15,14 +16,23 @@ function getCookie(name: string): string {
 }
 
 function setCookie(name: string, value: string) {
+  // You can add expiry or domain settings here if needed.
   document.cookie = `${name}=${value}; path=/;`;
 }
 
 const LanguageToggle: React.FC = () => {
-  const [buttonText, setButtonText] = useState("Switch to Hindi");
+  // isHindi: true means page is currently translated to Hindi
+  const [isHindi, setIsHindi] = useState(false);
 
   useEffect(() => {
-    // 1) Dynamically load Google Translate script if not present
+    // Check cookie on mount to see if translation is set to Hindi
+    if (getCookie("googtrans") === "/en/hi") {
+      setIsHindi(true);
+    } else {
+      setIsHindi(false);
+    }
+
+    // Load Google Translate script if it's not already loaded
     const addGoogleTranslateScript = () => {
       if (!document.getElementById("google-translate-script")) {
         const script = document.createElement("script");
@@ -35,12 +45,11 @@ const LanguageToggle: React.FC = () => {
       }
     };
 
-    // 2) The callback to initialize the widget with limited languages
     window.googleTranslateElementInit = () => {
       new window.google.translate.TranslateElement(
         {
           pageLanguage: "en",
-          includedLanguages: "en,hi", // Only English and Hindi
+          includedLanguages: "en,hi",
           layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
           autoDisplay: false,
         },
@@ -49,50 +58,46 @@ const LanguageToggle: React.FC = () => {
     };
 
     addGoogleTranslateScript();
-
-    // 3) Set the button text based on current "googtrans" cookie
-    if (getCookie("googtrans") === "/en/hi") {
-      setButtonText("Switch to English");
-    } else {
-      setButtonText("Switch to Hindi");
-    }
   }, []);
 
   const toggleLanguage = () => {
-    // If cookie is "/en/hi", that means it's in Hindi. Switch to English.
-    if (getCookie("googtrans") === "/en/hi") {
+    // Toggle the cookie value and update state
+    if (isHindi) {
       setCookie("googtrans", "/en/en");
-      setButtonText("Switch to Hindi");
+      setIsHindi(false);
     } else {
       setCookie("googtrans", "/en/hi");
-      setButtonText("Switch to English");
+      setIsHindi(true);
     }
-    // Reload to let Google re-translate
-    window.location.reload();
+    // Wait a short moment to ensure cookie is set, then reload
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
   };
 
   return (
     <>
-      {/* The hidden div required by Google Translate. */}
+      {/* Required hidden element by Google Translate */}
       <div id="google_translate_element" style={{ display: "none" }}></div>
-
-      {/* 
-         The button text is wrapped in a "notranslate" class 
-         so that Google doesn't automatically translate it. 
-      */}
+      {/* Animated Toggle Switch */}
       <button
         onClick={toggleLanguage}
-        className="bg-blue-500 text-white px-3 py-1 rounded transition hover:bg-blue-600 notranslate"
-        style={{ marginLeft: "1rem" }}
+        className="relative inline-flex items-center h-8 w-16 bg-gray-300 rounded-full p-1 cursor-pointer transition-colors duration-300"
       >
-        {buttonText}
+        <span
+          className={`bg-blue-600 w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ${
+            isHindi ? "translate-x-8" : "translate-x-0"
+          }`}
+        ></span>
+        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-800 select-none">
+          {isHindi ? "HI" : "EN"}
+        </span>
       </button>
-
-      {/* 
-         CSS to hide the top banner and other Google UI elements 
-         that appear by default. 
-      */}
       <style jsx global>{`
+        .notranslate {
+          translate: no !important;
+        }
+        /* Hide Google Translate banner and tooltips */
         .goog-te-banner-frame.skiptranslate,
         .goog-te-menu-frame.skiptranslate {
           display: none !important;
@@ -106,13 +111,8 @@ const LanguageToggle: React.FC = () => {
           display: none !important;
           box-shadow: none !important;
         }
-        /* Hide the small Google icon that can appear in the bottom corner */
         .goog-te-gadget-icon {
           display: none !important;
-        }
-        /* Mark text as not to be translated */
-        .notranslate {
-          translate: no !important;
         }
       `}</style>
     </>

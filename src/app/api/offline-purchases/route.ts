@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import OfflinePurchase from "@/models/offlinePurchase";
+import CoinEarningRate from "@/models/coinEarningRate"; // Import the coin rate model
 
 export async function GET() {
   try {
@@ -16,6 +17,9 @@ export async function GET() {
   }
 }
 
+
+
+
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
@@ -29,6 +33,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Fetch the current coin earning rate document.
+    let rateDoc = await CoinEarningRate.findOne({});
+    const coinRate = rateDoc ? rateDoc.rate : 50; // default to 50 if not found
+
+    // Calculate the coins earned based on the amount paid.
+    const coinsEarned = Math.floor(amountPaid / coinRate);
+
+    // Create new offline purchase including the calculated coinsEarned
     const newOfflinePurchase = new OfflinePurchase({
       name,
       email,
@@ -37,6 +49,7 @@ export async function POST(req: NextRequest) {
       amountPaid,
       dueAmount: dueAmount || 0,
       dateOfPayment: new Date(dateOfPayment),
+      coinsEarned, // Save the computed coin earning here
     });
     await newOfflinePurchase.save();
 
@@ -48,6 +61,7 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
 
 export async function DELETE(req: NextRequest) {
   try {
