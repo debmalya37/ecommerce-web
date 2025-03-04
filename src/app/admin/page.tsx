@@ -32,6 +32,7 @@ export default function AdminPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [users, setUsers] = useState<any[]>([]);
+  const [orderedUsers, setorderedUsers] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [newCategory, setNewCategory] = useState("");
   const [loadingData, setLoadingData] = useState(true);
@@ -165,7 +166,7 @@ const handleGiftSent = async () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        await Promise.all([fetchUsers(), fetchCategories(), fetchNotifications(), fetchOfflinePurchases(),fetchGifts(),fetchOffers()]);
+        await Promise.all([fetchUsers(), fetchCategories(), fetchNotifications(), fetchOfflinePurchases(),fetchGifts(),fetchOffers(),fetchAllOrders()]);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -228,6 +229,22 @@ const handleGiftSent = async () => {
     fetchOffers();
   }, []);
 
+  useEffect(() => {
+    if (status === "loading") return;
+    // Add your admin check here if needed
+    fetchAllOrders();
+  }, [status]);
+
+  const fetchAllOrders = async () => {
+    try {
+      const response = await axios.get("/api/allOrders");
+      setorderedUsers(response.data); // response.data is the array of users + orders
+    } catch (error) {
+      console.error("Error fetching all orders:", error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
   const fetchCategories = async () => {
     try {
       const response = await axios.get("/api/categories");
@@ -405,7 +422,8 @@ const handleStatusChange = async (orderId: string, newStatus: string) => {
     if (response.data.success) {
       alert("Order status updated successfully!");
       // Refresh the user list to update order statuses on the UI
-      fetchUsers();
+      await fetchUsers();
+      await fetchAllOrders();
     } else {
       alert("Failed to update order: " + response.data.error);
     }
@@ -750,105 +768,103 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
 
 
        {/* Button to show Order Management view */}
-      <div className="mb-6">
+<div className="mb-6">
+  <button
+    onClick={() => setShowOrderManagement(true)}
+    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+  >
+    Manage Orders
+  </button>
+</div>
+
+{/* Modal for Order Management */}
+{showOrderManagement && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white rounded-lg shadow-md p-6 max-w-5xl w-full overflow-auto max-h-[90vh]">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold text-gray-800">Order Management</h2>
         <button
-          onClick={() => setShowOrderManagement(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          onClick={() => setShowOrderManagement(false)}
+          className="text-gray-600 hover:text-gray-800 text-2xl"
         >
-          Manage Orders
+          &times;
         </button>
       </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-2 border">User Name</th>
+              <th className="px-4 py-2 border">Email</th>
+              <th className="px-4 py-2 border">Order ID</th>
+              <th className="px-4 py-2 border">Product Names</th>
+              <th className="px-4 py-2 border">Order Time</th>
+              <th className="px-4 py-2 border">Total Amount</th>
+              <th className="px-4 py-2 border">Current Status</th>
+              <th className="px-4 py-2 border">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {orderedUsers.flatMap((user) =>
+              (user.orders || []).map((order: any) => (
+                <tr key={order._id}>
+                  <td className="px-4 py-2 border">{user.fullName}</td>
+                  <td className="px-4 py-2 border">{user.email}</td>
+                  <td className="px-4 py-2 border">{order.orderId}</td>
+                  {/* Show product names joined by commas */}
+                  <td className="px-4 py-2 border">
+                    {order.products.map((p: any) => p.name).join(", ")}
+                  </td>
+                  {/* Format placedAt date/time */}
+                  <td className="px-4 py-2 border">
+                    {new Date(order.placedAt).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-2 border">₹{order.totalAmount}</td>
+                  <td className="px-4 py-2 border">{order.status}</td>
+                  <td className="px-4 py-2 border">
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={() => handleStatusChange(order.orderId, "Cancelled")}
+                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(order.orderId, "Shifted")}
+                        className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"
+                      >
+                        Shifted
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(order.orderId, "Out for Delivery")}
+                        className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"
+                      >
+                        Out for Delivery
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(order.orderId, "Delivered")}
+                        className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs"
+                      >
+                        Delivered
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(order.orderId, "Refund")}
+                        className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 text-xs"
+                      >
+                        Refund
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+)}
 
-      {/* Modal for Order Management */}
-      {showOrderManagement && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-md p-6 max-w-4xl w-full overflow-auto max-h-[90vh]">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-800">Order Management</h2>
-              <button
-                onClick={() => setShowOrderManagement(false)}
-                className="text-gray-600 hover:text-gray-800 text-2xl"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 border">User Name</th>
-                    <th className="px-4 py-2 border">Email</th>
-                    <th className="px-4 py-2 border">Order ID</th>
-                    <th className="px-4 py-2 border">Total Amount</th>
-                    <th className="px-4 py-2 border">Current Status</th>
-                    <th className="px-4 py-2 border">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {users.flatMap((user) =>
-                    (user.orders || []).map((order: any) => (
-                      <tr key={order.orderId}>
-                        <td className="px-4 py-2 border">{user.fullName}</td>
-                        <td className="px-4 py-2 border">{user.email}</td>
-                        <td className="px-4 py-2 border">{order.orderId}</td>
-                        <td className="px-4 py-2 border">₹{order.totalAmount}</td>
-                        <td className="px-4 py-2 border">{order.status}</td>
-                        <td className="px-4 py-2 border">
-                          <div className="flex flex-col gap-1">
-                            <button
-                              onClick={() =>
-                                handleStatusChange(order.orderId, "Cancelled")
-                              }
-                              className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(order.orderId, "Shifted")
-                              }
-                              className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"
-                            >
-                              Shifted
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(
-                                  order.orderId,
-                                  "Out for Delivery"
-                                )
-                              }
-                              className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 text-xs"
-                            >
-                              Out for Delivery
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(order.orderId, "Delivered")
-                              }
-                              className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 text-xs"
-                            >
-                              Delivered
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleStatusChange(order.orderId, "Refund")
-                              }
-                              className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600 text-xs"
-                            >
-                              Refund
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
 
         {/* Notifications Section */}
         <section className="bg-white rounded-lg shadow-md p-6">
