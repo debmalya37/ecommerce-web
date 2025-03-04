@@ -6,9 +6,10 @@ import User from "@/models/userModel";
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();
-    // Fetch all users, selecting only the fields needed for order management
     const users = await User.find({}, "fullName email orders").lean();
-    return NextResponse.json(users);
+    return NextResponse.json(users, {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (error: any) {
     console.error("Error fetching all orders:", error);
     return NextResponse.json(
