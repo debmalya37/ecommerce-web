@@ -8,14 +8,35 @@ declare global {
   }
 }
 
-function getCookie(name: string): string {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  return parts.length === 2 ? parts.pop()?.split(";").shift() || "" : "";
+// Remove all variants of the googtrans cookie (with different domains/paths)
+function removeAllGoogTransCookies() {
+  // The main cookie removal
+  document.cookie = "googtrans=; path=/; max-age=0;";
+
+  // Attempt to remove with domain variations if any
+  const hostname = window.location.hostname;
+  const domainParts = hostname.split(".");
+  // e.g. ["www", "example", "com"]
+  // Try progressively shorter domains: "example.com", "com"
+  for (let i = 0; i < domainParts.length; i++) {
+    const domain = domainParts.slice(i).join(".");
+    document.cookie = `googtrans=; domain=${domain}; path=/; max-age=0;`;
+    document.cookie = `googtrans=; domain=.${domain}; path=/; max-age=0;`;
+  }
 }
 
-function setCookie(name: string, value: string) {
-  document.cookie = `${name}=${value}; path=/;`;
+// Set a single googtrans cookie with path="/"
+function setGoogTransCookie(value: string) {
+  // Remove any existing cookies
+  removeAllGoogTransCookies();
+  // Now set the new cookie
+  document.cookie = `googtrans=${value}; path=/;`;
+}
+
+// Helper to read the current googtrans cookie
+function getGoogTransCookie(): string {
+  const match = document.cookie.match(/(^| )googtrans=([^;]+)/);
+  return match ? match[2] : "";
 }
 
 const LanguageToggle: React.FC = () => {
@@ -23,8 +44,8 @@ const LanguageToggle: React.FC = () => {
   const [isHindi, setIsHindi] = useState(false);
 
   useEffect(() => {
-    // On mount, check if the "googtrans" cookie is set to Hindi ("/en/hi")
-    if (getCookie("googtrans") === "/en/hi") {
+    // Check if "googtrans" is "/en/hi" -> means site is in Hindi
+    if (getGoogTransCookie() === "/en/hi") {
       setIsHindi(true);
     } else {
       setIsHindi(false);
@@ -47,7 +68,7 @@ const LanguageToggle: React.FC = () => {
       new window.google.translate.TranslateElement(
         {
           pageLanguage: "en",
-          includedLanguages: "en,hi", // Only English and Hindi
+          includedLanguages: "en,hi", // Only English & Hindi
           layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
           autoDisplay: false,
         },
@@ -59,16 +80,17 @@ const LanguageToggle: React.FC = () => {
   }, []);
 
   const toggleLanguage = () => {
-    // When toggling, use the correct cookie values:
-    // "/en/hi" for Hindi and "/en/en" for English.
+    // Toggle between "/en/hi" and "/en/en"
     if (isHindi) {
-      setCookie("googtrans", "/en/en");
+      // Currently in Hindi, switch to English
+      setGoogTransCookie("/en/en");
       setIsHindi(false);
     } else {
-      setCookie("googtrans", "/en/hi");
+      // Currently in English, switch to Hindi
+      setGoogTransCookie("/en/hi");
       setIsHindi(true);
     }
-    // Wait a short moment to ensure the cookie is set, then reload.
+    // Short delay to ensure the cookie is updated, then reload
     setTimeout(() => {
       window.location.reload();
     }, 300);
@@ -87,7 +109,7 @@ const LanguageToggle: React.FC = () => {
           className={`bg-blue-600 w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ${
             isHindi ? "translate-x-8" : "translate-x-0"
           }`}
-        ></span>
+        />
         <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-800 select-none">
           {isHindi ? "HI" : "EN"}
         </span>
