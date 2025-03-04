@@ -65,9 +65,12 @@ const LanguageToggle: React.FC = () => {
     if (isHindi) {
       setCookie("googtrans", "/en/en");
       setIsHindi(false);
-    } else {
-      setCookie("googtrans", "/en/hi");
+    } else if  (isHindi === false) {
+      setCookie("googtrans", "/hi/hi");
       setIsHindi(true);
+    } else {
+      setCookie("googtrans", "/en/en");
+      setIsHindi(false);
     }
     // Wait a short moment to ensure cookie is set, then reload
     setTimeout(() => {
