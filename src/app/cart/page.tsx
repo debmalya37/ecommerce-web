@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
+import axios from "axios";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Loader from "@/components/Loader";
 
 export default function CartPage() {
   const [cart, setCart] = useState<any[]>([]);
@@ -13,18 +16,18 @@ export default function CartPage() {
     setCart(savedCart);
 
     // Calculate total price from the cart items
-    const totalAmount = savedCart.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+    const totalAmount = savedCart.reduce(
+      (sum: number, item: any) => sum + item.price * item.quantity,
+      0
+    );
     setTotal(totalAmount);
   }, []);
 
   // Handle checkout and pass the cart details to the payment page
   const handleCheckout = async () => {
-    // Store cart and total amount in session storage for checkout
     sessionStorage.setItem("cart", JSON.stringify(cart));
-    sessionStorage.setItem('source', 'cart'); 
+    sessionStorage.setItem("source", "cart");
     sessionStorage.setItem("total", total.toString());
-
-    // Redirect to the payment page
     router.push("/userBillingDetails");
   };
 
@@ -32,14 +35,12 @@ export default function CartPage() {
   const handleRemoveFromCart = (itemId: string) => {
     const updatedCart = cart.filter((item) => item._id !== itemId);
     setCart(updatedCart);
-
-    // Update local storage after removing an item
     localStorage.setItem("cart", JSON.stringify(updatedCart));
-
-    // Recalculate total
-    const updatedTotal = updatedCart.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+    const updatedTotal = updatedCart.reduce(
+      (sum: number, item: any) => sum + item.price * item.quantity,
+      0
+    );
     setTotal(updatedTotal);
-    // Refresh the window to update the view
     window.location.reload();
   };
 
@@ -57,20 +58,31 @@ export default function CartPage() {
                   key={item._id}
                   className="flex flex-col md:flex-row justify-between items-center bg-[#1F2A37] rounded-md p-4 shadow transition hover:shadow-md"
                 >
-                  {/* Item details */}
-                  <div className="flex-1 mb-2 md:mb-0 md:mr-4">
-                    <h3 className="text-lg font-semibold text-white">
-                      {item.name}
-                    </h3>
-                    <p className="text-sm text-gray-300">
-                      Price:{" "}
-                      <span className="font-bold text-green-400">
-                        ₹{item.price}
-                      </span>
-                    </p>
-                    <p className="text-sm text-gray-300">
-                      Quantity: <span className="font-bold">{item.quantity}</span>
-                    </p>
+                  <div className="flex items-center">
+                    <div className="w-16 h-16 flex-shrink-0 mr-4">
+                    <img
+                    src={item.imageUrl || "/images/placeholder.jpg"}
+                    alt={item.name}
+                    className="w-full h-full object-cover rounded"
+                    onError={(e) => (e.currentTarget.src = "/images/placeholder.jpg")}
+                  />
+
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">
+                        {item.name}
+                      </h3>
+                      <p className="text-sm text-gray-300">
+                        Price:{" "}
+                        <span className="font-bold text-green-400">
+                          ₹{item.price}
+                        </span>
+                      </p>
+                      <p className="text-sm text-gray-300">
+                        Quantity:{" "}
+                        <span className="font-bold">{item.quantity}</span>
+                      </p>
+                    </div>
                   </div>
 
                   {/* Remove button */}

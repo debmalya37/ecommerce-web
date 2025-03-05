@@ -51,6 +51,8 @@ const [giftRecipient, setGiftRecipient] = useState<{ email: string; fullName: st
 const [gifts, setGifts] = useState<any[]>([]);
 const [newCategoryIcon, setNewCategoryIcon] = useState("");
 const [newCategoryIconColor, setNewCategoryIconColor] = useState("#000000");
+  const [newCategoryIconFile, setNewCategoryIconFile] = useState<string>("");
+  const [categoryError, setCategoryError] = useState<string>("");
 
 // List of available icon identifiers (statically defined)
 const iconOptions = [
@@ -271,20 +273,39 @@ const handleGiftSent = async () => {
     }
   };
 
-  // Update your handleAddCategory function to include the icon:
+  const handleIconFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewCategoryIconFile(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategory.trim()) return;
     try {
-      await axios.post("/api/categories", { name: newCategory, icon: newCategoryIcon, iconColor: newCategoryIconColor });
+      await axios.post("/api/categories", {
+        name: newCategory,
+        icon: newCategoryIcon,
+        iconColor: newCategoryIconColor,
+        iconFile: newCategoryIconFile, // Include file data if provided
+      });
       setNewCategory("");
       setNewCategoryIcon("");
+      setNewCategoryIconFile("");
       setNewCategoryIconColor("#000000");
       fetchCategories();
     } catch (error) {
       console.error("Error adding category:", error);
+      // If error response contains message, show it, otherwise a generic error message.
+      setCategoryError((error as any).response?.data?.error || "Failed to add category try uploading pic with jpg, png, jpeg format with less size");
     }
   };
+
   // Delete a category by id
   const handleDeleteCategory = async (categoryId: string) => {
     try {
@@ -680,10 +701,15 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
   </section>
 
        
-        {/* Categories Section */}
-        <section className="bg-white rounded-lg shadow-md p-6">
+  <section className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Categories Management</h2>
       <form onSubmit={handleAddCategory} className="flex flex-col gap-4 mb-6">
+        {/* Display error message if exists */}
+      {categoryError && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+          {categoryError}
+        </div>
+      )}
         <input
           type="text"
           value={newCategory}
@@ -692,7 +718,15 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
           className="flex-1 p-2 border rounded-md"
           required
         />
-        {/* Manual icon URL input (optional) */}
+        {/* File input for uploading icon image */}
+        <input
+        title="icon"
+          type="file"
+          accept="image/*"
+          onChange={handleIconFileChange}
+          className="flex-1 p-2 border rounded-md"
+        />
+        {/* Or manual icon URL input */}
         <input
           type="text"
           value={newCategoryIcon}
@@ -717,7 +751,7 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
         </div>
         <p className="text-sm font-medium">Select icon color:</p>
         <input
-        title="color"
+          title="color"
           type="color"
           value={newCategoryIconColor}
           onChange={(e) => setNewCategoryIconColor(e.target.value)}
@@ -764,7 +798,6 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
         ))}
       </div>
     </section>
-
 
 
        {/* Button to show Order Management view */}

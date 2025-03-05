@@ -78,28 +78,31 @@ export default function ProductDetails({ params }: { params: { id: string } }) {
   );
 
   // Add to cart
-  const handleAddToCart = () => {
-    if (alreadyInCart) return;
+  // Inside ProductDetails component, update handleAddToCart:
+const handleAddToCart = () => {
+  if (alreadyInCart) return;
 
-    const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
-    const variantColor =
-      hasVariants && selectedVariantIndex !== null
-        ? product.variants[selectedVariantIndex].color
-        : null;
+  const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
+  const variantColor =
+    hasVariants && selectedVariantIndex !== null
+      ? product.variants[selectedVariantIndex].color
+      : null;
 
-    const productToAdd = {
-      _id: product._id,
-      name: product.name,
-      quantity,
-      price: product.price,
-      variant: variantColor,
-    };
-
-    cartItems.push(productToAdd);
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-    setAlreadyInCart(true);
-    window.location.reload();
+  // Include image URL from activeImages array (using the first image)
+  const productToAdd = {
+    _id: product._id,
+    name: product.name,
+    quantity,
+    price: product.price,
+    variant: variantColor,
+    imageUrl: activeImages[0]  // Added property: store the first image URL
   };
+
+  cartItems.push(productToAdd);
+  localStorage.setItem("cart", JSON.stringify(cartItems));
+  setAlreadyInCart(true);
+  window.location.reload();
+};
 
   // Buy now
   const handleBuyNow = () => {
