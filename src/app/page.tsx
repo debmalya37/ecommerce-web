@@ -167,7 +167,7 @@ export default function HomePage() {
                   <span
                     className="
                       block 
-                      bg-[#331f62] 
+                      bg-[#ebeaec] 
                       rounded-lg 
                       shadow 
                       p-4 
@@ -199,7 +199,7 @@ export default function HomePage() {
                         <img
                           src={cat.icon}
                           alt={cat.name}
-                          className="w-10 h-10 object-contain"
+                          className="w-32 h-28 object-contain"
                         />
                       )
                     ) : (
@@ -207,7 +207,7 @@ export default function HomePage() {
                         <LuStore />
                       </span>
                     )}
-                    <p className="mt-2 text-gray-200 font-semibold break-words max-w-full">
+                    <p className="mt-2 text-gray-950 font-semibold break-words max-w-full">
                       {cat.name}
                     </p>
                   </span>
@@ -217,36 +217,36 @@ export default function HomePage() {
           </div>
         </section>
 
-     {/* Featured Products Section */}
-<section className="py-12 bg-gradient-to-br from-purple-200 via-blue-200 to-purple-200">
-  <div className="container mx-auto px-6">
-    <h2 className="text-3xl font-bold text-gray-950 mb-6 text-center font-serif">
-      Featured Products
-    </h2>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-      {featuredProducts.map((product: any) => (
-        <Link key={product._id} href={`/product/${product._id}`}>
-          <span className="block bg-gray-50 p-4 rounded-lg shadow-md text-center hover:shadow-xl transition transform hover:scale-105">
-            <div className="h-40 w-full bg-gray-200 mb-2 rounded-md overflow-hidden">
-              <img
-                src={product.images[0]}
-                alt={product.name}
-                width={300}
-                height={300}
-                className="object-contain w-full h-full"
-              />
+            {/* Featured Products Section */}
+        <section className="py-12 bg-gradient-to-br from-purple-200 via-blue-200 to-purple-200">
+          <div className="container mx-auto px-6">
+            <h2 className="text-3xl font-bold text-gray-950 mb-6 text-center font-serif">
+              Featured Products
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {featuredProducts.map((product: any) => (
+                <Link key={product._id} href={`/product/${product._id}`}>
+                  <span className="block bg-gray-50 p-4 rounded-lg shadow-md text-center hover:shadow-xl transition transform hover:scale-105">
+                    <div className="h-40 w-full bg-gray-200 mb-2 rounded-md overflow-hidden">
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        width={300}
+                        height={300}
+                        className="object-contain w-full h-full"
+                      />
+                    </div>
+                    <h3 className="font-bold text-gray-800 mb-2">{product.name}</h3>
+                    <p className="text-sm text-gray-600">Short description here</p>
+                    <p className="text-lg font-semibold text-blue-600 mt-2">
+                      ₹{product.price}
+                    </p>
+                  </span>
+                </Link>
+              ))}
             </div>
-            <h3 className="font-bold text-gray-800 mb-2">{product.name}</h3>
-            <p className="text-sm text-gray-600">Short description here</p>
-            <p className="text-lg font-semibold text-blue-600 mt-2">
-              ₹{product.price}
-            </p>
-          </span>
-        </Link>
-      ))}
-    </div>
-  </div>
-</section>
+          </div>
+        </section>
 
 
       {/* Why Choose Us Section */}
