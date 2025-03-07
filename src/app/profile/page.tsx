@@ -288,7 +288,8 @@ useEffect(() => {
                   {previousYearKg.toFixed(3)}
                 </td>
                 <td className="px-4 py-2 border">
-                  {currentYearKg.toFixed(3)}
+                  {/* {currentYearKg.toFixed(3)} */}
+                  {(user?.wallet?.coins / 1000).toFixed(3)}
                 </td>
                 <td className="px-4 py-2 border">
                   {/* {giftKg.toFixed(3)} */}
@@ -296,7 +297,8 @@ useEffect(() => {
                 </td>
                 <td className="px-4 py-2 border">
                   {/* {totalKg.toFixed(3)} */}
-                  {(currentYearKg + 0.2).toFixed(3)}
+                  {/* {(currentYearKg + 0.2).toFixed(3)} */}
+                  {((user?.wallet?.coins / 1000) + 0.2).toFixed(3)}
                 </td>
               </tr>
             );
