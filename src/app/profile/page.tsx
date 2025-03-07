@@ -139,12 +139,12 @@ useEffect(() => {
         </div>
 
         {/* Earned Detergent Section (displayed in kg) */}
-        <div>
+        {/* <div>
           <label className="block text-gray-700 font-semibold">Earned Detergent (kg)</label>
           <p className="bg-gray-100 p-3 rounded-md">
             {(user?.wallet?.coins / 1000).toFixed(3)} kg (Current Year)
           </p>
-        </div>
+        </div> */}
 
         {/* Editable Fields */}
         {isEditing ? (
