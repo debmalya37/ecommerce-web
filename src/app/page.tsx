@@ -153,7 +153,7 @@ export default function HomePage() {
       </header>
 
        {/* Categories Section */}
-       <section className="py-8 bg-gradient-to-br from-blue-400 via-gray-300 to-purple-500">
+       <section className="py-8 bg-gradient-to-br from-blue-100 via-gray-100 to-purple-100">
   <div className="container mx-auto px-4">
     <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center font-serif">
       Shop by Category
