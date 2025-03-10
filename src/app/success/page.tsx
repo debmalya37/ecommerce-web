@@ -94,10 +94,14 @@ export default function SuccessPage() {
 
 
   // Update wallet reward, add transaction record, push order details, and send confirmation email (only once)
+// Update wallet reward, add transaction record, push order details, and send email (only once)
 useEffect(() => {
   const addTransactionAndOrderRecord = async () => {
     // Skip if order has already been posted
     if (orderPostedRef.current) return;
+
+    // Ensure userDetails exists before accessing its properties
+    if (!userDetails) return;
 
     const originalTotal = Number(sessionStorage.getItem("originalTotal"));
     const walletUsedValue = Number(sessionStorage.getItem("walletUsed") || "0");
@@ -122,12 +126,12 @@ useEffect(() => {
         const response = await fetch("/api/update-wallet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: userDetails?.email, walletChange: netChange, transactionId }),
+          body: JSON.stringify({ email: userDetails.email, walletChange: netChange, transactionId }),
         });
         const data = await response.json();
         if (data.success) {
           setWalletEarned(coinsEarned);
-          // Do not set rewardGiven here since we haven't sent the email yet
+          // Do not set rewardGiven here yet, until email is sent.
         } else {
           console.error("Failed to update wallet:", data.message);
         }
@@ -153,10 +157,10 @@ useEffect(() => {
 
     // Push the order details directly to the user's orders
     const orderData = {
-      orderId: transactionId, // from your payment flow
+      orderId: transactionId,
       totalAmount,
       products: products.map((p) => ({
-        productId: p._id, // ensure this is a valid ObjectId string
+        productId: p._id,
         name: p.name,
         quantity: p.quantity,
         price: p.price,
@@ -166,7 +170,6 @@ useEffect(() => {
     };
     try {
       await axios.post("/api/orders", { email: userDetails.email, order: orderData });
-      // Mark order as posted so that it won't post again
       orderPostedRef.current = true;
     } catch (error) {
       console.error("Error adding order record:", error);
@@ -204,7 +207,8 @@ useEffect(() => {
   if (userDetails?.email) {
     addTransactionAndOrderRecord();
   }
-}, [userDetails.email, products, totalAmount, coinRate, userDetails]);
+}, [userDetails, products, totalAmount, coinRate]);
+
 
   // PDF Download function
 const handleDownloadInvoice = () => {
