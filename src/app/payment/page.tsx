@@ -15,7 +15,7 @@ export default function PaymentPage() {
   const [offers, setOffers] = useState<any[]>([]);
   const router = useRouter();
 
-  // Helper: Calculate delivery charge (you can adjust this logic as needed)
+  // Helper: Calculate delivery charge
   const getDeliveryCharge = (amount: number): number => (amount > 300 ? 0 : 0);
 
   // Fetch active offers
@@ -36,13 +36,12 @@ export default function PaymentPage() {
   // Updated calculateDiscount function based on offers
   const calculateDiscount = (amount: number): number => {
     if (offers.length === 0) return 0;
-    // Sort offers descending by cutoff
     const sortedOffers = [...offers].sort((a, b) => b.cutoff - a.cutoff);
     const applicableOffer = sortedOffers.find((offer) => amount >= offer.cutoff);
     return applicableOffer ? amount * (applicableOffer.discountPercentage / 100) : 0;
   };
 
-  // Initial setup: fetch user details, wallet info, and calculate totals
+  // Initial setup: fetch user details and calculate totals
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem("userDetails") || "{}");
     setUserDetails(user);
@@ -52,21 +51,6 @@ export default function PaymentPage() {
       return;
     }
 
-    // Fetch wallet details from your API
-    // const fetchUserWalletDetails = async () => {
-    //   try {
-    //     const response = await axios.get(`/api/user?email=${user.email}`);
-    //     if (response.data) {
-    //       setWalletBalance(response.data.wallet.balance);
-    //       setWalletCoins(response.data.wallet.coins);
-    //     }
-    //   } catch (error) {
-    //     console.error("Failed to fetch user wallet details:", error);
-    //   }
-    // };
-    // fetchUserWalletDetails();
-
-    // Determine total amount from the selected source (cart or buy-now)
     const source = sessionStorage.getItem("source");
     let total = 0;
     if (source === "cart") {
@@ -81,20 +65,18 @@ export default function PaymentPage() {
     setDeliveryCharge(delivery);
     setTotalAmount(total);
 
-    // Calculate discount based on offers
     const discountAmount = calculateDiscount(total);
     setDiscount(discountAmount);
 
-    // Compute adjusted total: total - walletUsed + deliveryCharge - discount
     setAdjustedTotal(total - walletUsed + delivery - discountAmount);
-  }, [router, offers, calculateDiscount, walletUsed]);
+  }, [router, offers, walletUsed]);
 
-  // Update adjusted total when walletUsed, totalAmount, deliveryCharge, or offers change
+  // Update totals when dependencies change
   useEffect(() => {
     const discountAmount = calculateDiscount(totalAmount);
     setDiscount(discountAmount);
     setAdjustedTotal(totalAmount - walletUsed + deliveryCharge - discountAmount);
-  }, [walletUsed, totalAmount, deliveryCharge, offers, calculateDiscount]);
+  }, [walletUsed, totalAmount, deliveryCharge, offers]);
 
   const handleWalletChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.min(Number(e.target.value), walletBalance, totalAmount);
@@ -102,20 +84,24 @@ export default function PaymentPage() {
   };
 
   const handlePayment = async () => {
-    // Instead of using sessionStorage, store items in localStorage so they’re available across tabs.
-    localStorage.setItem("originalTotal", totalAmount.toString());
-    localStorage.setItem("walletUsed", walletUsed.toString());
-  
-    // Also, if the source is "cart" or "buy-now", copy those items to localStorage as well.
-    const source = sessionStorage.getItem("source"); // Assuming this is already set
-    if (source === "cart") {
-      const cart = JSON.parse(sessionStorage.getItem("cart") || "[]");
-      localStorage.setItem("cart", JSON.stringify(cart));
-    } else if (source === "buy-now") {
-      const product = JSON.parse(sessionStorage.getItem("selectedProduct") || "{}");
-      localStorage.setItem("selectedProduct", JSON.stringify(product));
-    }
-  
+    // Build additional data from sessionStorage that needs to be passed along
+    const source = sessionStorage.getItem("source") || "";
+    const cart = sessionStorage.getItem("cart") || "";
+    const selectedProduct = sessionStorage.getItem("selectedProduct") || "";
+    const additionalData = {
+      originalTotal: totalAmount.toString(),
+      walletUsed: walletUsed.toString(),
+      source,
+      cart,
+      selectedProduct,
+    };
+
+    // Build a query string
+    const queryParams = new URLSearchParams();
+    (Object.keys(additionalData) as (keyof typeof additionalData)[]).forEach((key) => {
+      queryParams.set(key, additionalData[key]);
+    });
+
     // Update wallet if needed.
     if (walletUsed > 0) {
       try {
@@ -133,19 +119,24 @@ export default function PaymentPage() {
         return;
       }
     }
-  
+
     try {
-      const response = await axios.post("/api/phonepe-payment", {
-        amount: adjustedTotal,
-        userDetails,
-      });
-  
+      // Include query parameters in the API endpoint URL
+      const response = await axios.post(
+        `/api/phonepe-payment?${queryParams.toString()}`,
+        {
+          amount: adjustedTotal,
+          userDetails,
+        }
+      );
+
       if (response.data.transactionId) {
+        // If needed, you can store transactionId in localStorage or process further
         localStorage.setItem("transactionId", response.data.transactionId);
       }
-  
+
       if (response.data.redirect) {
-        // Open the PhonePe payment URL in a new tab (external browser)
+        // Open the payment URL in a new tab (external browser)
         window.open(response.data.redirect, "_blank", "noopener,noreferrer");
       } else {
         console.error("Redirect URL not returned");
@@ -154,7 +145,6 @@ export default function PaymentPage() {
       console.error("Payment initiation failed:", error);
     }
   };
-  
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">
@@ -163,7 +153,7 @@ export default function PaymentPage() {
           Confirm Your Payment
         </h2>
         <div className="space-y-4">
-          {/* Wallet Section (optional input if you want users to use wallet funds) */}
+          {/* Wallet Section (optional) */}
           <div className="bg-gray-100 p-4 rounded-md">
             <div className="flex justify-between items-center mb-2">
               {/* Optionally display wallet balance */}
