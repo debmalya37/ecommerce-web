@@ -102,16 +102,27 @@ export default function PaymentPage() {
   };
 
   const handlePayment = async () => {
-    sessionStorage.setItem("originalTotal", totalAmount.toString());
-    sessionStorage.setItem("walletUsed", walletUsed.toString());
-
+    // Instead of using sessionStorage, store items in localStorage so they’re available across tabs.
+    localStorage.setItem("originalTotal", totalAmount.toString());
+    localStorage.setItem("walletUsed", walletUsed.toString());
+  
+    // Also, if the source is "cart" or "buy-now", copy those items to localStorage as well.
+    const source = sessionStorage.getItem("source"); // Assuming this is already set
+    if (source === "cart") {
+      const cart = JSON.parse(sessionStorage.getItem("cart") || "[]");
+      localStorage.setItem("cart", JSON.stringify(cart));
+    } else if (source === "buy-now") {
+      const product = JSON.parse(sessionStorage.getItem("selectedProduct") || "{}");
+      localStorage.setItem("selectedProduct", JSON.stringify(product));
+    }
+  
+    // Update wallet if needed.
     if (walletUsed > 0) {
       try {
         const walletUpdateResponse = await axios.post("/api/updateWallet", {
           email: userDetails.email,
           amountUsed: walletUsed,
         });
-
         if (walletUpdateResponse.data.error) {
           console.error("Wallet update failed:", walletUpdateResponse.data.error);
           return;
@@ -122,19 +133,19 @@ export default function PaymentPage() {
         return;
       }
     }
-
+  
     try {
       const response = await axios.post("/api/phonepe-payment", {
         amount: adjustedTotal,
         userDetails,
       });
-
+  
       if (response.data.transactionId) {
-        sessionStorage.setItem("transactionId", response.data.transactionId);
+        localStorage.setItem("transactionId", response.data.transactionId);
       }
-
+  
       if (response.data.redirect) {
-        // Instead of window.location.href, open in a new tab / external browser
+        // Open the PhonePe payment URL in a new tab (external browser)
         window.open(response.data.redirect, "_blank", "noopener,noreferrer");
       } else {
         console.error("Redirect URL not returned");
@@ -143,6 +154,7 @@ export default function PaymentPage() {
       console.error("Payment initiation failed:", error);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">
