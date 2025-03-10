@@ -17,7 +17,12 @@ export default function PaymentPage() {
   const router = useRouter();
 
   // Helper: Calculate delivery charge (you can adjust this logic as needed)
-  const getDeliveryCharge = (amount: number): number => (amount > 300 ? 0 : 0);
+  const getDeliveryCharge = (amount: number): number => {
+    if (amount >= 500) return 0;
+    else if (amount >= 200) return 15;
+    else return 20;
+  };
+  
 
   // Fetch active offers
   useEffect(() => {

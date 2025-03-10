@@ -154,68 +154,87 @@ export default function HomePage() {
 
        {/* Categories Section */}
        <section className="py-8 bg-gradient-to-br from-blue-400 via-gray-300 to-purple-500">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center font-serif">
-              Shop by Category
-            </h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-              {categories.map((cat) => (
-                <Link
-                  key={cat._id}
-                  href={`/products?category=${encodeURIComponent(cat.name)}`}
-                >
-                  <span
-                    className="
-                      block 
-                      bg-[#ebeaec] 
-                      rounded-lg 
-                      shadow 
-                      p-4 
-                      text-center 
-                      hover:shadow-lg 
-                      transition 
-                      min-h-[100px] 
-                      flex 
-                      flex-col 
-                      items-center 
-                      justify-center
-                      text-white
-                      border-2
-                      border-cyan-500
-                      hover:border-gray-200
-                      font-sans
-                    "
-                  >
-                    {/* Icon display */}
-                    {cat.icon ? (
-                      iconMapping[cat.icon] ? (
-                        // If the icon is one of our static identifiers, render it with an optional color
-                        React.createElement(iconMapping[cat.icon], {
-                          className: "w-10 h-10",
-                          style: { color: cat.iconColor || "#fff" },
-                        })
-                      ) : (
-                        // Otherwise assume it's a URL and render an image
-                        <img
-                          src={cat.icon}
-                          alt={cat.name}
-                          className="w-32 h-28 object-contain"
-                        />
-                      )
-                    ) : (
-                      <span className="w-10 h-10 flex items-center justify-center text-xl">
-                        <LuStore />
-                      </span>
-                    )}
-                    <p className="mt-2 text-gray-950 font-semibold break-words max-w-full">
-                      {cat.name}
-                    </p>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
+  <div className="container mx-auto px-4">
+    <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center font-serif">
+      Shop by Category
+    </h2>
+    <div className="relative">
+      {/* Left Arrow */}
+      <button
+        title="Previous"
+        className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+        onClick={() => {
+          document.getElementById("category-slider")?.scrollBy({ left: -200, behavior: "smooth" });
+        }}
+      >
+        <svg
+          className="w-6 h-6 text-gray-800"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      {/* Slider Container */}
+      <div
+        id="category-slider"
+        className="flex space-x-4 overflow-x-auto scrollbar-hide px-10"
+      >
+        {categories.map((cat) => (
+          <Link key={cat._id} href={`/products?category=${encodeURIComponent(cat.name)}`}>
+            <span className="flex-shrink-0 block bg-[#ebeaec] rounded-lg shadow p-4 text-center hover:shadow-lg transition min-h-[100px] w-40 flex flex-col items-center justify-center border-2 border-cyan-500 hover:border-gray-200 font-sans">
+              {/* Icon display */}
+              {cat.icon ? (
+                iconMapping[cat.icon] ? (
+                  // Render static icon with stored color
+                  React.createElement(iconMapping[cat.icon], {
+                    className: "w-10 h-10",
+                    style: { color: cat.iconColor || "#fff" },
+                  })
+                ) : (
+                  // Fallback: render image if icon not in mapping
+                  <img
+                    src={cat.icon}
+                    alt={cat.name}
+                    className="w-32 h-28 object-contain"
+                  />
+                )
+              ) : (
+                <span className="w-10 h-10 flex items-center justify-center text-xl">
+                  <LuStore />
+                </span>
+              )}
+              <p className="mt-2 text-gray-950 font-semibold break-words max-w-full">
+                {cat.name}
+              </p>
+            </span>
+          </Link>
+        ))}
+      </div>
+
+      {/* Right Arrow */}
+      <button
+      title="Scroll Right"
+        className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+        onClick={() => {
+          document.getElementById("category-slider")?.scrollBy({ left: 200, behavior: "smooth" });
+        }}
+      >
+        <svg
+          className="w-6 h-6 text-gray-800"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</section>
+
 
             {/* Featured Products Section */}
         <section className="py-12 bg-gradient-to-br from-purple-200 via-blue-200 to-purple-200">
