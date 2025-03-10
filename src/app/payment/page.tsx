@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { useWallet } from "@/hooks/useWallet";
 
 export default function PaymentPage() {
   const [userDetails, setUserDetails] = useState<any>(null);
@@ -54,18 +53,18 @@ export default function PaymentPage() {
     }
 
     // Fetch wallet details from your API
-    const fetchUserWalletDetails = async () => {
-      try {
-        const response = await axios.get(`/api/user?email=${user.email}`);
-        if (response.data) {
-          setWalletBalance(response.data.wallet.balance);
-          setWalletCoins(response.data.wallet.coins);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user wallet details:", error);
-      }
-    };
-    fetchUserWalletDetails();
+    // const fetchUserWalletDetails = async () => {
+    //   try {
+    //     const response = await axios.get(`/api/user?email=${user.email}`);
+    //     if (response.data) {
+    //       setWalletBalance(response.data.wallet.balance);
+    //       setWalletCoins(response.data.wallet.coins);
+    //     }
+    //   } catch (error) {
+    //     console.error("Failed to fetch user wallet details:", error);
+    //   }
+    // };
+    // fetchUserWalletDetails();
 
     // Determine total amount from the selected source (cart or buy-now)
     const source = sessionStorage.getItem("source");
@@ -88,14 +87,14 @@ export default function PaymentPage() {
 
     // Compute adjusted total: total - walletUsed + deliveryCharge - discount
     setAdjustedTotal(total - walletUsed + delivery - discountAmount);
-  }, [router, offers]);
+  }, [router, offers, calculateDiscount, walletUsed]);
 
   // Update adjusted total when walletUsed, totalAmount, deliveryCharge, or offers change
   useEffect(() => {
     const discountAmount = calculateDiscount(totalAmount);
     setDiscount(discountAmount);
     setAdjustedTotal(totalAmount - walletUsed + deliveryCharge - discountAmount);
-  }, [walletUsed, totalAmount, deliveryCharge, offers]);
+  }, [walletUsed, totalAmount, deliveryCharge, offers, calculateDiscount]);
 
   const handleWalletChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.min(Number(e.target.value), walletBalance, totalAmount);
@@ -135,7 +134,8 @@ export default function PaymentPage() {
       }
 
       if (response.data.redirect) {
-        window.location.href = response.data.redirect;
+        // Instead of window.location.href, open in a new tab / external browser
+        window.open(response.data.redirect, "_blank", "noopener,noreferrer");
       } else {
         console.error("Redirect URL not returned");
       }
@@ -147,7 +147,9 @@ export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">
       <div className="w-full max-w-md bg-white text-gray-800 rounded-lg shadow-lg p-6">
-        <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">Confirm Your Payment</h2>
+        <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">
+          Confirm Your Payment
+        </h2>
         <div className="space-y-4">
           {/* Wallet Section (optional input if you want users to use wallet funds) */}
           <div className="bg-gray-100 p-4 rounded-md">
@@ -155,8 +157,7 @@ export default function PaymentPage() {
               {/* Optionally display wallet balance */}
             </div>
             <div className="flex items-center gap-2">
-              {/* Uncomment below to allow wallet usage input */}
-              {/*
+              {/* Uncomment below to allow wallet usage input
               <input
                 type="number"
                 value={walletUsed}
@@ -177,9 +178,15 @@ export default function PaymentPage() {
           </div>
 
           {/* User Details */}
-          <p><strong>Full Name:</strong> {userDetails?.fullName}</p>
-          <p><strong>Email:</strong> {userDetails?.email}</p>
-          <p><strong>Phone:</strong> {userDetails?.phone}</p>
+          <p>
+            <strong>Full Name:</strong> {userDetails?.fullName}
+          </p>
+          <p>
+            <strong>Email:</strong> {userDetails?.email}
+          </p>
+          <p>
+            <strong>Phone:</strong> {userDetails?.phone}
+          </p>
 
           {/* Price Details */}
           <div className="space-y-2">
