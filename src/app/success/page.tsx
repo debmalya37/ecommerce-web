@@ -14,6 +14,7 @@ export default function SuccessPage() {
   const [coinRate, setCoinRate] = useState<number>(50); // Default coin rate: ₹50 per coin
   const { walletBalance } = useWallet(userDetails?.email);
   const router = useRouter();
+  const [emailSent, setEmailSent] = useState(false);
 
   
   // Ref flag to ensure the order is posted only once
@@ -56,100 +57,154 @@ export default function SuccessPage() {
     setPaymentStatus("Payment Successful!");
   }, []);
 
-  // Update wallet reward, add transaction record, and push order details (only once)
-  useEffect(() => {
-    const addTransactionAndOrderRecord = async () => {
-      // Skip if order has already been posted
-      if (orderPostedRef.current) return;
+//   // Send confirmation email using your send-email API
+// useEffect(() => {
+//   const sendConfirmationEmail = async () => {
+//     // If reward has already been given (stored in sessionStorage), skip sending email.
+//     const rewardGiven = sessionStorage.getItem("rewardGiven");
+//     if (rewardGiven === "true") return;
 
-      const originalTotal = Number(sessionStorage.getItem("originalTotal"));
-      const walletUsed = Number(sessionStorage.getItem("walletUsed") || "0");
-      const transactionId = sessionStorage.getItem("transactionId");
-      const rewardGiven = sessionStorage.getItem("rewardGiven");
+//     if (!userDetails?.email) return;
+//     const transactionId = sessionStorage.getItem("transactionId");
+//     if (!transactionId) return;
+//     if (emailSent) return; // Ensure we send the email only once
 
-      if (!transactionId) {
-        console.log("No valid transactionId. Skipping update.");
-        return;
-      }
-      if (rewardGiven) {
-        console.log("Reward already given for this transaction. Skipping update.");
-        return;
-      }
+//     const emailDetails = {
+//       userDetails,
+//       transactionId,
+//       products,
+//       totalAmount,
+//     };
 
-      // Update wallet reward if applicable
-      if (originalTotal) {
-        const coinsEarned = Math.floor(originalTotal / coinRate);
-        const netChange = coinsEarned - walletUsed;
-        setWalletEarned(coinsEarned);
-        try {
-          const response = await fetch("/api/update-wallet", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: userDetails?.email, walletChange: netChange, transactionId }),
-          });
-          const data = await response.json();
-          if (data.success) {
-            setWalletEarned(coinsEarned);
-            sessionStorage.setItem("rewardGiven", "true");
-          } else {
-            console.error("Failed to update wallet:", data.message);
-          }
-        } catch (error) {
-          console.error("Error updating wallet:", error);
-        }
-      }
+//     try {
+//       const response = await axios.post("/api/send-email", emailDetails);
+//       if (response.data.success) {
+//         setEmailSent(true);
+//       } else {
+//         console.error("Failed to send email:", response.data.message);
+//       }
+//     } catch (error) {
+//       console.error("Error sending email:", error);
+//     }
+//   };
 
-      // Add transaction record
-      const purchasedProducts = products.map((p) => p.name);
-      const transactionData = {
-        email: userDetails.email,
-        transactionId,
-        amount: totalAmount,
-        products: purchasedProducts,
-      };
+//   sendConfirmationEmail();
+// }, [userDetails, products, totalAmount, emailSent]);
 
+
+
+  // Update wallet reward, add transaction record, push order details, and send confirmation email (only once)
+useEffect(() => {
+  const addTransactionAndOrderRecord = async () => {
+    // Skip if order has already been posted
+    if (orderPostedRef.current) return;
+
+    const originalTotal = Number(sessionStorage.getItem("originalTotal"));
+    const walletUsedValue = Number(sessionStorage.getItem("walletUsed") || "0");
+    const transactionId = sessionStorage.getItem("transactionId");
+    const rewardGiven = sessionStorage.getItem("rewardGiven");
+
+    if (!transactionId) {
+      console.log("No valid transactionId. Skipping update.");
+      return;
+    }
+    if (rewardGiven) {
+      console.log("Reward already given for this transaction. Skipping update.");
+      return;
+    }
+
+    // Update wallet reward if applicable
+    if (originalTotal) {
+      const coinsEarned = Math.floor(originalTotal / coinRate);
+      const netChange = coinsEarned - walletUsedValue;
+      setWalletEarned(coinsEarned);
       try {
-        await axios.post("/api/add-transaction", transactionData);
-      } catch (error) {
-        console.error("Error adding transaction record:", error);
-      }
-
-      // Push the order details directly to the user's orders
-      const orderData = {
-        orderId: transactionId, // from your payment flow
-        totalAmount,
-        products: products.map((p) => ({
-          productId: p._id, // ensure this is a valid ObjectId string
-          name: p.name,
-          quantity: p.quantity,
-          price: p.price,
-        })),
-        status: "Placed",
-        placedAt: new Date().toISOString(),
-      };
-      try {
-        await axios.post("/api/orders", { email: userDetails.email, order: orderData });
-        // Mark order as posted so that it won't post again
-        orderPostedRef.current = true;
-      } catch (error) {
-        console.error("Error adding order record:", error);
-      }
-
-      // Optionally clear sessionStorage if not coming from a valid payment URL
-      if (typeof window !== "undefined") {
-        const currentUrl = window.location.href;
-        if (!currentUrl.includes("sltTkn=") && !currentUrl.includes("/api/status/")) {
-          sessionStorage.removeItem("originalTotal");
-          sessionStorage.removeItem("walletUsed");
-          sessionStorage.removeItem("transactionId");
+        const response = await fetch("/api/update-wallet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userDetails?.email, walletChange: netChange, transactionId }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          setWalletEarned(coinsEarned);
+          // Do not set rewardGiven here since we haven't sent the email yet
+        } else {
+          console.error("Failed to update wallet:", data.message);
         }
+      } catch (error) {
+        console.error("Error updating wallet:", error);
       }
+    }
+
+    // Add transaction record
+    const purchasedProducts = products.map((p) => p.name);
+    const transactionData = {
+      email: userDetails.email,
+      transactionId,
+      amount: totalAmount,
+      products: purchasedProducts,
     };
 
-    if (userDetails?.email) {
-      addTransactionAndOrderRecord();
+    try {
+      await axios.post("/api/add-transaction", transactionData);
+    } catch (error) {
+      console.error("Error adding transaction record:", error);
     }
-  }, [userDetails?.email, products, totalAmount, coinRate]);
+
+    // Push the order details directly to the user's orders
+    const orderData = {
+      orderId: transactionId, // from your payment flow
+      totalAmount,
+      products: products.map((p) => ({
+        productId: p._id, // ensure this is a valid ObjectId string
+        name: p.name,
+        quantity: p.quantity,
+        price: p.price,
+      })),
+      status: "Placed",
+      placedAt: new Date().toISOString(),
+    };
+    try {
+      await axios.post("/api/orders", { email: userDetails.email, order: orderData });
+      // Mark order as posted so that it won't post again
+      orderPostedRef.current = true;
+    } catch (error) {
+      console.error("Error adding order record:", error);
+    }
+
+    // Send confirmation email if reward has not been given
+    try {
+      const emailDetails = {
+        userDetails,
+        transactionId,
+        products,
+        totalAmount,
+      };
+      const emailResponse = await axios.post("/api/send-email", emailDetails);
+      if (emailResponse.data.success) {
+        sessionStorage.setItem("rewardGiven", "true");
+      } else {
+        console.error("Failed to send email:", emailResponse.data.message);
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+    }
+
+    // Optionally clear sessionStorage if not coming from a valid payment URL
+    if (typeof window !== "undefined") {
+      const currentUrl = window.location.href;
+      if (!currentUrl.includes("sltTkn=") && !currentUrl.includes("/api/status/")) {
+        sessionStorage.removeItem("originalTotal");
+        sessionStorage.removeItem("walletUsed");
+        sessionStorage.removeItem("transactionId");
+      }
+    }
+  };
+
+  if (userDetails?.email) {
+    addTransactionAndOrderRecord();
+  }
+}, [userDetails.email, products, totalAmount, coinRate, userDetails]);
 
   // PDF Download function
 const handleDownloadInvoice = () => {

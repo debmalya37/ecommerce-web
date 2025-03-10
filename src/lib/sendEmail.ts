@@ -8,8 +8,10 @@ export default async function sendPaymentEmail(details: any) {
     port: 587, // TLS port
     secure: false, // Use STARTTLS
     auth: {
-      user: "debmalyasen37@gmail.com", // Replace with your email address
-      pass: "mtog xezl xlsb xyaz", // Replace with your app-specific password
+      user: "hiuriofficial@gmail.com", // Replace with your email address hiuriofficial@gmail.com
+
+      // pass: "mtog xezl xlsb xyaz", // Replace with your app-specific password
+      pass: "tuli pgni jvnb coca", // Replace with your app-specific password
     },
 });
 

@@ -11,8 +11,8 @@ export async function POST(req: Request) {
       port: 587,
       secure: false,
       auth: {
-        user: "debmalyasen37@gmail.com", // Replace with your email
-        pass: "mtog xezl xlsb xyaz", // Replace with your app password
+        user: "hiuriofficial@gmail.com", // Replace with your email
+        pass: "tuli pgni jvnb coca", // Replace with your app password
       },
     });
 
