@@ -17,9 +17,9 @@ export async function POST(request: Request) {
       merchantTransactionId: transactionId,
       name: userDetails.name, // Use userDetails for name
       amount: Math.round(amount * 100), // Convert to paisa
-      redirectUrl: `https://hiuri.in/api/status/${transactionId}?email=${encodeURIComponent(userDetails.email)}&totalAmount=${amount}`,
+      redirectUrl: `https://hiuri.in/api/status/${transactionId}`,
       redirectMode: "POST",
-      callbackUrl: `https://hiuri.in/api/status/${transactionId}?email=${encodeURIComponent(userDetails.email)}&totalAmount=${amount}`,
+      callbackUrl: `https://hiuri.in/api/status/${transactionId}`,
       mobileNumber: userDetails.phone, // Use userDetails for phone
       paymentInstrument: {
         type: "PAY_PAGE",

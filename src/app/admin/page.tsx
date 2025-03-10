@@ -132,6 +132,7 @@ const handleGiftSent = async () => {
   alert("Gift sent and recorded successfully!");
   // Optionally, refresh data that might be affected by sending a gift.
   await fetchUsers(); // For example, re-fetch the users list if their gift status is updated.
+  await fetchGifts(); // Re-fetch the gifts list
 };
 
   // Get the email from session, if available.
@@ -386,25 +387,35 @@ const handleGiftSent = async () => {
   };
   
 
-  const handleSendGift = async (user: any) => {
-    const giftDetails = prompt(`Enter gift details for ${user.fullName}`);
-    if (!giftDetails) return;
-    try {
-      const response = await axios.post("/api/gifts", {
-        recipientEmail: user.email,
-        recipientName: user.fullName,
-        giftDetails,
-      });
-      if (response.data.success) {
-        alert("Gift sent successfully!");
-      } else {
-        alert("Failed to send gift: " + response.data.error);
-      }
-    } catch (error) {
-      console.error("Error sending gift:", error);
-      alert("Error sending gift.");
+  // Admin page snippet for handling gift sending
+const handleSendGift = async (user: any) => {
+  const giftDetails = prompt(`Enter gift details for ${user.fullName}`);
+  if (!giftDetails) return;
+  const quantityStr = prompt(`Enter gift quantity in grams for ${user.fullName}`);
+  const quantity = Number(quantityStr);
+  if (!quantity || quantity <= 0) {
+    alert("Please enter a valid quantity in grams.");
+    return;
+  }
+  try {
+    const response = await axios.post("/api/gifts", {
+      recipientEmail: user.email,
+      recipientName: user.fullName,
+      giftDetails,
+      quantity, // Send quantity
+    });
+    if (response.data.success) {
+      alert("Congrats! Gift sent successfully!");
+      fetchGifts(); // Refresh gift list
+    } else {
+      alert("Failed to send gift: " + response.data.error);
     }
-  };
+  } catch (error) {
+    console.error("Error sending gift:", error);
+    alert("Error sending gift.");
+  }
+};
+
   
   // Handle deleting a notification by ID.
   const handleDeleteNotification = async (notificationId: string) => {
@@ -588,6 +599,7 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
           <th className="px-4 py-2 border">Recipient Name</th>
           <th className="px-4 py-2 border">Recipient Email</th>
           <th className="px-4 py-2 border">Gift Details</th>
+          <th className="px-4 py-2 border">Quantity (g)</th>
           <th className="px-4 py-2 border">Status</th>
           <th className="px-4 py-2 border">Sent On</th>
           <th className="px-4 py-2 border">Actions</th>
@@ -601,10 +613,9 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
             <td className="px-4 py-2 border">
               <pre className="whitespace-pre-wrap">{gift.giftDetails}</pre>
             </td>
+            <td className="px-4 py-2 border">{gift.quantity}</td>
             <td className="px-4 py-2 border">{gift.status}</td>
-            <td className="px-4 py-2 border">
-              {new Date(gift.createdAt).toLocaleString()}
-            </td>
+            <td className="px-4 py-2 border">{new Date(gift.createdAt).toLocaleString()}</td>
             <td className="px-4 py-2 border">
               {gift.status === "Sent" && (
                 <button
@@ -621,6 +632,7 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
     </table>
   </div>
 </section>
+
 
 
         <div>

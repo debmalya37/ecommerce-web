@@ -1,3 +1,4 @@
+// app/api/gifts/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Gift from "@/models/giftModel";
@@ -22,8 +23,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
-    const { recipientEmail, recipientName, giftDetails } = await req.json();
-    if (!recipientEmail || !recipientName || !giftDetails) {
+    const { recipientEmail, recipientName, giftDetails, quantity } = await req.json();
+    if (!recipientEmail || !recipientName || !giftDetails || !quantity) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
       recipientEmail,
       recipientName,
       giftDetails,
+      quantity, // Save the quantity in grams
       status: "Sent"
     });
     await gift.save();
@@ -45,7 +47,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Optional: PATCH endpoint to update gift status (e.g., cancel a gift)
+// Optional: PATCH endpoint remains unchanged
 export async function PATCH(req: NextRequest) {
   try {
     await dbConnect();
