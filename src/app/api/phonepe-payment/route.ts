@@ -1,4 +1,3 @@
-// app/api/phonepe-payment/route.ts
 import axios from "axios";
 import crypto from "crypto";
 import { NextResponse } from "next/server";
@@ -9,29 +8,19 @@ let merchant_id = "M22KXVB5MOYOV";
 
 export async function POST(request: Request) {
   try {
-    // Extract query parameters from the URL:
-    const url = new URL(request.url);
-    const originalTotal = url.searchParams.get("originalTotal");
-    const walletUsedQS = url.searchParams.get("walletUsed");
-    const source = url.searchParams.get("source");
-    const cartQS = url.searchParams.get("cart");
-    const selectedProductQS = url.searchParams.get("selectedProduct");
-    console.log("Additional data from query params:", { originalTotal, walletUsedQS, source, cartQS, selectedProductQS });
-
-    // Read the JSON body
-    const { amount, userDetails } = await request.json();
+    const { amount, userDetails } = await request.json(); // Retaining the current userDetails logic
     const transactionId = "Tr-" + uuidv4().toString().slice(-6);
 
     // Prepare data payload for PhonePe API
     const data = {
       merchantId: merchant_id,
       merchantTransactionId: transactionId,
-      name: userDetails.name,
-      amount: Math.round(amount * 100),
-      redirectUrl: `https://hiuri.in/api/status/${transactionId}`,
+      name: userDetails.name, // Use userDetails for name
+      amount: Math.round(amount * 100), // Convert to paisa
+      redirectUrl: `https://hiuri.in/api/status/${transactionId}?email=${encodeURIComponent(userDetails.email)}&totalAmount=${amount}`,
       redirectMode: "POST",
-      callbackUrl: `https://hiuri.in/api/status/${transactionId}`,
-      mobileNumber: userDetails.phone,
+      callbackUrl: `https://hiuri.in/api/status/${transactionId}?email=${encodeURIComponent(userDetails.email)}&totalAmount=${amount}`,
+      mobileNumber: userDetails.phone, // Use userDetails for phone
       paymentInstrument: {
         type: "PAY_PAGE",
       },
@@ -40,11 +29,12 @@ export async function POST(request: Request) {
     const payload = JSON.stringify(data);
     const payloadMain = Buffer.from(payload).toString("base64");
     const keyIndex = 1;
-    const stringToHash = payloadMain + "/pg/v1/pay" + salt_key;
-    const sha256 = crypto.createHash("sha256").update(stringToHash).digest("hex");
+    const string = payloadMain + "/pg/v1/pay" + salt_key;
+    const sha256 = crypto.createHash("sha256").update(string).digest("hex");
     const checksum = sha256 + "###" + keyIndex;
 
-    const prod_URL = "https://api.phonepe.com/apis/hermes/pg/v1/pay";
+    const prod_URL =
+      "https://api.phonepe.com/apis/hermes/pg/v1/pay";
 
     const options = {
       method: "POST",
@@ -59,13 +49,23 @@ export async function POST(request: Request) {
       },
     };
 
+    // Await axios response
     const response = await axios(options);
-    console.log("PhonePe response:", response.data);
 
-    const redirect = response.data.data.instrumentResponse.redirectInfo.url;
-    return NextResponse.json({ redirect, transactionId }, { headers: { "Cache-Control": "no-store" } });
+    // Log and return the response data
+    console.log(response.data);
+
+    const redirect=response.data.data.instrumentResponse.redirectInfo.url;
+  console.log(redirect);
+  return NextResponse.json({ redirect, transactionId }); // Send transactionId along with the redirect URL
+ // Return response as JSON
+
+
+    
   } catch (error: any) {
     console.error("Payment initiation error:", error.response?.data || error.message);
+
+    // Return error response
     return NextResponse.json(
       { error: "Payment initiation failed", details: error.message },
       { status: 500 }

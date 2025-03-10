@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { useWallet } from "@/hooks/useWallet";
 
 export default function PaymentPage() {
   const [userDetails, setUserDetails] = useState<any>(null);
@@ -15,7 +16,7 @@ export default function PaymentPage() {
   const [offers, setOffers] = useState<any[]>([]);
   const router = useRouter();
 
-  // Helper: Calculate delivery charge
+  // Helper: Calculate delivery charge (you can adjust this logic as needed)
   const getDeliveryCharge = (amount: number): number => (amount > 300 ? 0 : 0);
 
   // Fetch active offers
@@ -36,12 +37,13 @@ export default function PaymentPage() {
   // Updated calculateDiscount function based on offers
   const calculateDiscount = (amount: number): number => {
     if (offers.length === 0) return 0;
+    // Sort offers descending by cutoff
     const sortedOffers = [...offers].sort((a, b) => b.cutoff - a.cutoff);
     const applicableOffer = sortedOffers.find((offer) => amount >= offer.cutoff);
     return applicableOffer ? amount * (applicableOffer.discountPercentage / 100) : 0;
   };
 
-  // Initial setup: fetch user details and calculate totals
+  // Initial setup: fetch user details, wallet info, and calculate totals
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem("userDetails") || "{}");
     setUserDetails(user);
@@ -51,6 +53,21 @@ export default function PaymentPage() {
       return;
     }
 
+    // Fetch wallet details from your API
+    const fetchUserWalletDetails = async () => {
+      try {
+        const response = await axios.get(`/api/user?email=${user.email}`);
+        if (response.data) {
+          setWalletBalance(response.data.wallet.balance);
+          setWalletCoins(response.data.wallet.coins);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user wallet details:", error);
+      }
+    };
+    fetchUserWalletDetails();
+
+    // Determine total amount from the selected source (cart or buy-now)
     const source = sessionStorage.getItem("source");
     let total = 0;
     if (source === "cart") {
@@ -65,13 +82,15 @@ export default function PaymentPage() {
     setDeliveryCharge(delivery);
     setTotalAmount(total);
 
+    // Calculate discount based on offers
     const discountAmount = calculateDiscount(total);
     setDiscount(discountAmount);
 
+    // Compute adjusted total: total - walletUsed + deliveryCharge - discount
     setAdjustedTotal(total - walletUsed + delivery - discountAmount);
-  }, [router, offers, walletUsed]);
+  }, [router, offers]);
 
-  // Update totals when dependencies change
+  // Update adjusted total when walletUsed, totalAmount, deliveryCharge, or offers change
   useEffect(() => {
     const discountAmount = calculateDiscount(totalAmount);
     setDiscount(discountAmount);
@@ -84,31 +103,16 @@ export default function PaymentPage() {
   };
 
   const handlePayment = async () => {
-    // Build additional data from sessionStorage that needs to be passed along
-    const source = sessionStorage.getItem("source") || "";
-    const cart = sessionStorage.getItem("cart") || "";
-    const selectedProduct = sessionStorage.getItem("selectedProduct") || "";
-    const additionalData = {
-      originalTotal: totalAmount.toString(),
-      walletUsed: walletUsed.toString(),
-      source,
-      cart,
-      selectedProduct,
-    };
+    sessionStorage.setItem("originalTotal", totalAmount.toString());
+    sessionStorage.setItem("walletUsed", walletUsed.toString());
 
-    // Build a query string
-    const queryParams = new URLSearchParams();
-    (Object.keys(additionalData) as (keyof typeof additionalData)[]).forEach((key) => {
-      queryParams.set(key, additionalData[key]);
-    });
-
-    // Update wallet if needed.
     if (walletUsed > 0) {
       try {
         const walletUpdateResponse = await axios.post("/api/updateWallet", {
           email: userDetails.email,
           amountUsed: walletUsed,
         });
+
         if (walletUpdateResponse.data.error) {
           console.error("Wallet update failed:", walletUpdateResponse.data.error);
           return;
@@ -121,23 +125,17 @@ export default function PaymentPage() {
     }
 
     try {
-      // Include query parameters in the API endpoint URL
-      const response = await axios.post(
-        `/api/phonepe-payment?${queryParams.toString()}`,
-        {
-          amount: adjustedTotal,
-          userDetails,
-        }
-      );
+      const response = await axios.post("/api/phonepe-payment", {
+        amount: adjustedTotal,
+        userDetails,
+      });
 
       if (response.data.transactionId) {
-        // If needed, you can store transactionId in localStorage or process further
-        localStorage.setItem("transactionId", response.data.transactionId);
+        sessionStorage.setItem("transactionId", response.data.transactionId);
       }
 
       if (response.data.redirect) {
-        // Open the payment URL in a new tab (external browser)
-        window.open(response.data.redirect, "_blank", "noopener,noreferrer");
+        window.location.href = response.data.redirect;
       } else {
         console.error("Redirect URL not returned");
       }
@@ -149,17 +147,16 @@ export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 text-white flex flex-col justify-center items-center">
       <div className="w-full max-w-md bg-white text-gray-800 rounded-lg shadow-lg p-6">
-        <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">
-          Confirm Your Payment
-        </h2>
+        <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">Confirm Your Payment</h2>
         <div className="space-y-4">
-          {/* Wallet Section (optional) */}
+          {/* Wallet Section (optional input if you want users to use wallet funds) */}
           <div className="bg-gray-100 p-4 rounded-md">
             <div className="flex justify-between items-center mb-2">
               {/* Optionally display wallet balance */}
             </div>
             <div className="flex items-center gap-2">
-              {/* Uncomment below to allow wallet usage input
+              {/* Uncomment below to allow wallet usage input */}
+              {/*
               <input
                 type="number"
                 value={walletUsed}
@@ -180,15 +177,9 @@ export default function PaymentPage() {
           </div>
 
           {/* User Details */}
-          <p>
-            <strong>Full Name:</strong> {userDetails?.fullName}
-          </p>
-          <p>
-            <strong>Email:</strong> {userDetails?.email}
-          </p>
-          <p>
-            <strong>Phone:</strong> {userDetails?.phone}
-          </p>
+          <p><strong>Full Name:</strong> {userDetails?.fullName}</p>
+          <p><strong>Email:</strong> {userDetails?.email}</p>
+          <p><strong>Phone:</strong> {userDetails?.phone}</p>
 
           {/* Price Details */}
           <div className="space-y-2">
