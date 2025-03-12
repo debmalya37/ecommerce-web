@@ -154,6 +154,7 @@ const handleGiftSent = async () => {
     if (status === "loading") return;
     const allowedEmails = [
       "debmalyasen37@gmail.com",
+      "debmalyasen15@gmail.com",
       "sunilchahal1995a@gmail.com",
       "tech@gmail.com",
     ];

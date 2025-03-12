@@ -66,8 +66,9 @@ export default function Profile() {
     fetchNotifications();
   }, []);
 
+  
 
-  // Fetch gifts for the user
+// Fetch gifts only for the logged-in user using their email
 useEffect(() => {
   const fetchGifts = async () => {
     try {
@@ -83,7 +84,7 @@ useEffect(() => {
     fetchGifts();
   }
 }, [user]);
-  
+
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -233,88 +234,83 @@ useEffect(() => {
       {/* Detergent Earning History Table */}
 {/* Detergent Earning History Table */}
 <div className="mt-8">
-  <h2 className="text-2xl font-bold text-gray-800 mb-4">
-    Derox Active Detergent Powder Earning History
-  </h2>
-  <div className="overflow-x-auto">
-    {user && (() => {
-      // 1. Build a map of year -> coins earned from walletHistory
-      const yearsMap: Record<number, number> = {};
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          Derox Active Detergent Powder Earning History
+        </h2>
+        <div className="overflow-x-auto">
+        {user && (() => {
+  // Build a map of year -> coins earned (in grams) from walletHistory
+  const yearsMap: Record<number, number> = {};
+  if (user.walletHistory && user.walletHistory.length > 0) {
+    user.walletHistory.forEach((record: { year: number; coins: number }) => {
+      yearsMap[record.year] = (yearsMap[record.year] || 0) + record.coins;
+    });
+  }
+  // Add the current year's coins from user.wallet
+  const currentYear = new Date().getFullYear();
+  yearsMap[currentYear] = (yearsMap[currentYear] || 0) + (user.wallet?.coins || 0);
+  
+  // Sort the years in ascending order
+  const sortedYears = Object.keys(yearsMap)
+    .map(Number)
+    .sort((a, b) => a - b);
 
-      // Add the archived years from user.walletHistory
-      if (user.walletHistory && user.walletHistory.length > 0) {
-        user.walletHistory.forEach((record: { year: number; coins: number }) => {
-          yearsMap[record.year] = (yearsMap[record.year] || 0) + record.coins;
-        });
-      }
+  let runningTotalGrams = 0;
 
-      // Add the current year’s coins (from user.wallet.coins)
-      const currentYear = new Date().getFullYear();
-      yearsMap[currentYear] = (yearsMap[currentYear] || 0) + (user.wallet?.coins || 0);
+  return (
+    <table className="min-w-full border text-center">
+      <thead>
+        <tr className="bg-gray-200">
+          <th className="px-4 py-2 border">Year</th>
+          <th className="px-4 py-2 border">Previous Year (kg)</th>
+          <th className="px-4 py-2 border">Current Year (kg)</th>
+          <th className="px-4 py-2 border">Gift (kg)</th>
+          <th className="px-4 py-2 border">Total (kg)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {sortedYears.map((year) => {
+          // previous total (in grams) before adding this year's earnings
+          const previousYearKg = runningTotalGrams / 1000;
+          const currentYearCoins = yearsMap[year];
+          const currentYearKg = currentYearCoins / 1000;
+          // Filter gifts for this year (assumes API already excludes cancelled gifts)
+          const giftsForYear = gifts.filter((gift: any) => {
+            const giftYear = new Date(gift.createdAt).getFullYear();
+            return giftYear === year;
+          });
+          const totalGiftGrams = giftsForYear.reduce(
+            (acc: number, gift: any) => acc + gift.quantity,
+            0
+          );
+          const giftKg = totalGiftGrams / 1000;
 
-      // 2. Sort the years in ascending order
-      const sortedYears = Object.keys(yearsMap).map(Number).sort((a, b) => a - b);
+          // Total for the year is previous earnings + current year's coins + gift quantity
+          const totalGrams = runningTotalGrams + currentYearCoins + totalGiftGrams;
+          const totalKg = totalGrams / 1000;
+          // Update running total for the next year's "Previous Year"
+          runningTotalGrams = totalGrams;
 
-      // 3. We'll keep a running total as we move year by year
-      let runningTotal = 0;
-
-      return (
-        <table className="min-w-full border text-center">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="px-4 py-2 border">Year</th>
-              <th className="px-4 py-2 border">Previous Year (kg)</th>
-              <th className="px-4 py-2 border">Current Year (kg)</th>
-              <th className="px-4 py-2 border">Gift (kg)</th>
-              <th className="px-4 py-2 border">Total (kg)</th>
+          return (
+            <tr key={year}>
+              <td className="px-4 py-2 border">{year}</td>
+              <td className="px-4 py-2 border">{previousYearKg.toFixed(3)}</td>
+              <td className="px-4 py-2 border">{currentYearKg.toFixed(3)}</td>
+              <td className="px-4 py-2 border">{giftKg.toFixed(3)}</td>
+              <td className="px-4 py-2 border">{totalKg.toFixed(3)}</td>
             </tr>
-          </thead>
-          <tbody>
-            {sortedYears.map((year) => {
-              // previousYearKg: total so far before adding this year's coins
-              const previousYearKg = runningTotal / 1000;
+          );
+        })}
+      </tbody>
+    </table>
+  );
+})()}
 
-              // coins for the current year
-              const currentYearCoins = yearsMap[year];
-              const currentYearKg = currentYearCoins / 1000;
-
-              // In this example, we assume gift = current year's earning (or a static value)
-              const giftKg = currentYearKg; // or you could use a fixed value
-
-              // Update the running total after adding current year's coins
-              runningTotal += currentYearCoins;
-              const totalKg = runningTotal / 1000;
-
-              return (
-                <tr key={year}>
-                  <td className="px-4 py-2 border">{year}</td>
-                  <td className="px-4 py-2 border">
-                    {previousYearKg.toFixed(3)}
-                  </td>
-                  <td className="px-4 py-2 border">
-                    {(user?.wallet?.coins / 1000).toFixed(3)}
-                  </td>
-                  <td className="px-4 py-2 border">
-                    {/* {giftKg.toFixed(3)} */}
-                    0.200
-                  </td>
-                  <td className="px-4 py-2 border">
-                    {/* {totalKg.toFixed(3)} */}
-                    {/* {(currentYearKg + 0.2).toFixed(3)} */}
-                  {((user?.wallet?.coins / 1000) + 0.2).toFixed(3)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      );
-    })()}
-  </div>
-  <p className="mt-2 text-sm text-gray-600">
-    At the start of each year, your current year&apos;s detergent earned is added to your history and your current detergent balance is reset.
-  </p>
-</div>
+        </div>
+        <p className="mt-2 text-sm text-gray-600">
+          At the start of each year, your current year’s detergent earned is added to your history and your current detergent balance is reset.
+        </p>
+      </div>
 
 
 

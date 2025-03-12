@@ -3,14 +3,20 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Gift from "@/models/giftModel";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();
     const { searchParams } = new URL(req.url);
     const recipientEmail = searchParams.get("recipientEmail");
-    const gifts = recipientEmail
-      ? await Gift.find({ recipientEmail })
-      : await Gift.find({});
+    const query = recipientEmail
+      ? {
+          recipientEmail: { $regex: new RegExp(`^${recipientEmail}$`, "i") },
+          status: { $ne: "Cancelled" }
+        }
+      : { status: { $ne: "Cancelled" } };
+    const gifts = await Gift.find(query);
     return NextResponse.json({ success: true, gifts });
   } catch (error: any) {
     return NextResponse.json(
@@ -19,6 +25,9 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+
+
 
 export async function POST(req: NextRequest) {
   try {
