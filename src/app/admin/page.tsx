@@ -107,6 +107,57 @@ useEffect(() => {
   fetchGifts();
 }, []);
 
+
+
+// Compute current year
+const currentYear = new Date().getFullYear();
+
+// 1️⃣ Map: email → total detergent grams (all years)
+const totalDetergentGramsByEmail: Record<string, number> = {};
+// 2️⃣ Map: email → previous‑year detergent grams
+const previousYearDetergentGramsByEmail: Record<string, number> = {};
+users.forEach((u) => {
+  const key = u.email?.toLowerCase() ?? "";
+
+  // Sum up all walletHistory coins
+  const historySum = u.walletHistory?.reduce(
+    (sum: number, r: any) => sum + r.coins,
+    0
+  ) || 0;
+
+  // Current year balance
+  const currentCoins = u.wallet?.coins || 0;
+
+  totalDetergentGramsByEmail[key] = historySum + currentCoins;
+
+  // Previous year only
+  const prevYearSum = u.walletHistory?.reduce(
+    (sum: number, r: any) =>
+      r.year === currentYear - 1 ? sum + r.coins : sum,
+    0
+  ) || 0;
+  previousYearDetergentGramsByEmail[key] = prevYearSum;
+});
+
+// Convert to kg
+const totalDetergentKgByEmail = Object.fromEntries(
+  Object.entries(totalDetergentGramsByEmail).map(([e, g]) => [e, g / 1000])
+);
+const previousYearDetergentKgByEmail = Object.fromEntries(
+  Object.entries(previousYearDetergentGramsByEmail).map(([e, g]) => [e, g / 1000])
+);
+
+// Existing gift maps…
+const totalGiftGramsByEmail: Record<string, number> = {};
+gifts.forEach((g) => {
+  const key = g.recipientEmail?.toLowerCase() ?? "";
+  totalGiftGramsByEmail[key] = (totalGiftGramsByEmail[key] || 0) + g.quantity;
+});
+const totalGiftKgByEmail = Object.fromEntries(
+  Object.entries(totalGiftGramsByEmail).map(([e, g]) => [e, g / 1000])
+);
+
+
 // Function to cancel a gift (set its status to "Cancelled")
 const handleCancelGift = async (giftId: string) => {
   try {
@@ -533,63 +584,81 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
       </button>
     </form>
   </section>
-        {/* Users Section */}
-        <section className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">Users Management</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Password</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detergent (grams)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reset Coins</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {users.map((user) => (
-                  <tr key={user._id}>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.password}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.phone}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+        {/* --- Users Management Section --- */}
+<section className="bg-white rounded-lg shadow-md p-6">
+  <h2 className="text-2xl font-bold mb-6 text-gray-800">Users Management</h2>
+  <div className="overflow-x-auto">
+    <table className="w-full">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Password</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+          {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detergent (g)</th> */}
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Previous Year Earning (kg)</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detergent Earned (kg)</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Gifts (g)</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gifts Received (kg)</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-200">
+        {users.map((user) => {
+          const emailKey = user.email?.toLowerCase() ?? "";
+          const walletBalance = user.wallet?.coins || 0;
+          const totalDetergentKg = totalDetergentKgByEmail[emailKey] ?? 0;
+          const totalGiftKg = totalGiftKgByEmail[emailKey] ?? 0;
+          const totalGiftGrams = totalGiftGramsByEmail[emailKey] || 0;
+
+          return (
+            <tr key={user._id}>
+              <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{user.email || "-"}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{user.password}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{user.phone || "-"}</td>
+              <td className="px-6 py-4 whitespace-nowrap">
                       {user.address}, {user.state}, {user.pincode}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{user.wallet?.coins || 0}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-  <button
-    onClick={() => handleResetCoins(user.email)}
-    className="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700"
-  >
-    Reset
-  </button>
-  <button
-    onClick={() => handleOpenGiftModal(user)}
-    className="bg-purple-600 text-white px-3 py-1 rounded-md hover:bg-purple-700 ml-2"
-  >
-    Send Gift
-  </button>
-</td>
+              {/* <td className="px-6 py-4 whitespace-nowrap">{walletBalance}</td> */}
+              <td className="px-6 py-4 whitespace-nowrap">
+            {(previousYearDetergentKgByEmail[emailKey] || 0).toFixed(3)}
+          </td>
+              <td className="px-6 py-4 whitespace-nowrap">{totalDetergentKg.toFixed(3)}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{totalGiftGrams}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{totalGiftKg.toFixed(3)}</td>
+              <td className="px-6 py-4 whitespace-nowrap space-x-2">
+              <button
+                onClick={() => handleResetCoins(user.email)}
+                className="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700"
+              >
+                Reset
+              </button>
+                <button
+                  onClick={() => handleOpenGiftModal(user)}
+                  className="bg-purple-600 text-white px-3 py-1 rounded-md hover:bg-purple-700"
+                >
+                  Send Gift
+                </button>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
 
+  {isGiftModalOpen && giftRecipient && (
+    <SendGiftModal
+      isOpen={isGiftModalOpen}
+      onClose={() => setIsGiftModalOpen(false)}
+      recipient={giftRecipient}
+      onGiftSent={handleGiftSent}
+    />
+  )}
+</section>
 
-{isGiftModalOpen && giftRecipient && (
-  <SendGiftModal
-    isOpen={isGiftModalOpen}
-    onClose={() => setIsGiftModalOpen(false)}
-    recipient={giftRecipient}
-    onGiftSent={handleGiftSent}
-  />
-)}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
 
         <section className="bg-white rounded-lg shadow-md p-6 mt-8">
   <h2 className="text-2xl font-bold text-gray-800 mb-6">Gifts Sent to Users</h2>

@@ -334,15 +334,6 @@ const handleAddToCart = () => {
                 Out of Stock
               </p>
             )}
-
-<p
-  className="text-gray-700 text-sm leading-relaxed"
-  style={{ whiteSpace: "pre-line" }}
->
-  {product.description}
-</p>
-
-
             {activeStock > 0 && (
               <div className="flex items-center space-x-4">
                 <label className="text-sm font-semibold text-gray-600">
@@ -396,6 +387,16 @@ const handleAddToCart = () => {
                 Buy Now
               </button>
             </div>
+
+<p
+  className="text-gray-700 text-sm leading-relaxed"
+  style={{ whiteSpace: "pre-line" }}
+>
+  {product.description}
+</p>
+
+
+            
           </div>
         </div>
       </div>
