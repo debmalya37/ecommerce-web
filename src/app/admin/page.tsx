@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -7,6 +7,25 @@ import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader"; // Your Loader component
 import SendGiftModal from "@/components/SendGiftModal";
 import { PiBroomLight } from "react-icons/pi";
+import {
+  FaUser,
+  FaPhone,
+  FaRupeeSign,
+  FaCalendarAlt,
+} from "react-icons/fa";
+
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 import {
   FaSoap,
   FaBath,
@@ -107,10 +126,61 @@ useEffect(() => {
   fetchGifts();
 }, []);
 
+// Build the same maps you already have:
+const currentYear = new Date().getFullYear();
+const totalDetergentKgByEmail = useMemo(() => {
+  const m: Record<string, number> = {};
+  users.forEach((u) => {
+    const key = u.email?.toLowerCase() ?? "";
+    const historySum =
+      (u.walletHistory || []).reduce((s: number, r: any) => s + Number(r.coins || 0), 0) || 0;
+    const current = Number(u.wallet?.coins || 0);
+    m[key] = (historySum + current) / 1000;
+  });
+  return m;
+}, [users]);
 
+const previousYearDetergentKgByEmail = useMemo(() => {
+  const m: Record<string, number> = {};
+  users.forEach((u) => {
+    const key = u.email?.toLowerCase() ?? "";
+    const prev = (u.walletHistory || []).reduce(
+      (s: number, r: any) =>
+        new Date(r.year, 0).getFullYear() === currentYear - 1
+          ? s + Number(r.coins || 0)
+          : s,
+      0
+    );
+    m[key] = prev / 1000;
+  });
+  return m;
+}, [currentYear, users]);
+
+const totalGiftKgByEmail = useMemo(() => {
+  const m: Record<string, number> = {};
+  gifts.forEach((g) => {
+    const key = g.recipientEmail?.toLowerCase() ?? "";
+    m[key] = (m[key] || 0) + Number(g.quantity || 0) / 1000;
+  });
+  return m;
+}, [gifts]);
+
+// Prepare chart data
+const chartData = useMemo(
+  () =>
+    users.map((u) => {
+      const key = u.email?.toLowerCase() ?? "";
+      return {
+        name: u.fullName,
+        detergent: totalDetergentKgByEmail[key] || 0,
+        gifts: totalGiftKgByEmail[key] || 0,
+      };
+    }),
+  [users, totalDetergentKgByEmail, totalGiftKgByEmail]
+);
 
 // Compute current year
-const currentYear = new Date().getFullYear();
+// const currentYear = new Date().getFullYear();
 
 // 1️⃣ Map: email → total detergent grams (all years)
 const totalDetergentGramsByEmail: Record<string, number> = {};
@@ -140,12 +210,12 @@ users.forEach((u) => {
 });
 
 // Convert to kg
-const totalDetergentKgByEmail = Object.fromEntries(
-  Object.entries(totalDetergentGramsByEmail).map(([e, g]) => [e, g / 1000])
-);
-const previousYearDetergentKgByEmail = Object.fromEntries(
-  Object.entries(previousYearDetergentGramsByEmail).map(([e, g]) => [e, g / 1000])
-);
+// const totalDetergentKgByEmail = Object.fromEntries(
+//   Object.entries(totalDetergentGramsByEmail).map(([e, g]) => [e, g / 1000])
+// );
+// const previousYearDetergentKgByEmail = Object.fromEntries(
+//   Object.entries(previousYearDetergentGramsByEmail).map(([e, g]) => [e, g / 1000])
+// );
 
 // Existing gift maps…
 const totalGiftGramsByEmail: Record<string, number> = {};
@@ -153,9 +223,9 @@ gifts.forEach((g) => {
   const key = g.recipientEmail?.toLowerCase() ?? "";
   totalGiftGramsByEmail[key] = (totalGiftGramsByEmail[key] || 0) + g.quantity;
 });
-const totalGiftKgByEmail = Object.fromEntries(
-  Object.entries(totalGiftGramsByEmail).map(([e, g]) => [e, g / 1000])
-);
+// const totalGiftKgByEmail = Object.fromEntries(
+//   Object.entries(totalGiftGramsByEmail).map(([e, g]) => [e, g / 1000])
+// );
 
 
 // Function to cancel a gift (set its status to "Cancelled")
@@ -585,80 +655,115 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
     </form>
   </section>
         {/* --- Users Management Section --- */}
-<section className="bg-white rounded-lg shadow-md p-6">
-  <h2 className="text-2xl font-bold mb-6 text-gray-800">Users Management</h2>
-  <div className="overflow-x-auto">
-    <table className="w-full">
-      <thead className="bg-gray-50">
-        <tr>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Password</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
-          {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detergent (g)</th> */}
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Previous Year Earning (kg)</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Detergent Earned (kg)</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Gifts (g)</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gifts Received (kg)</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-gray-200">
-        {users.map((user) => {
-          const emailKey = user.email?.toLowerCase() ?? "";
-          const walletBalance = user.wallet?.coins || 0;
-          const totalDetergentKg = totalDetergentKgByEmail[emailKey] ?? 0;
-          const totalGiftKg = totalGiftKgByEmail[emailKey] ?? 0;
-          const totalGiftGrams = totalGiftGramsByEmail[emailKey] || 0;
-
-          return (
-            <tr key={user._id}>
-              <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{user.email || "-"}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{user.password}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{user.phone || "-"}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                      {user.address}, {user.state}, {user.pincode}
+      <section className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Users Management</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50 rounded-t-xl">
+              <tr>
+                {["Name","Email","Phone","Address","Prev Year (kg)","Total Earned (kg)","Total Gifts (g)","Gifts (kg)","Actions"].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {users.map((u) => {
+                const key = u.email?.toLowerCase() ?? "";
+                return (
+                  <tr key={u._id} className="hover:bg-gray-50">
+                    <td className="px-4 py-2 whitespace-nowrap">{u.fullName}</td>
+                    <td className="px-4 py-2 whitespace-nowrap text-blue-600">{u.email}</td>
+                    <td className="px-4 py-2 whitespace-nowrap">{u.phone || "-"}</td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">
+                      {u.address}, {u.state}, {u.pincode}
                     </td>
-              {/* <td className="px-6 py-4 whitespace-nowrap">{walletBalance}</td> */}
-              <td className="px-6 py-4 whitespace-nowrap">
-            {(previousYearDetergentKgByEmail[emailKey] || 0).toFixed(3)}
-          </td>
-              <td className="px-6 py-4 whitespace-nowrap">{totalDetergentKg.toFixed(3)}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{totalGiftGrams}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{totalGiftKg.toFixed(3)}</td>
-              <td className="px-6 py-4 whitespace-nowrap space-x-2">
-              <button
-                onClick={() => handleResetCoins(user.email)}
-                className="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700"
-              >
-                Reset
-              </button>
-                <button
-                  onClick={() => handleOpenGiftModal(user)}
-                  className="bg-purple-600 text-white px-3 py-1 rounded-md hover:bg-purple-700"
-                >
-                  Send Gift
-                </button>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      {previousYearDetergentKgByEmail[key]?.toFixed(3) ?? "0.000"}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      {totalDetergentKgByEmail[key]?.toFixed(3) ?? "0.000"}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      {( (totalGiftKgByEmail[key] || 0) * 1000 ).toFixed(0)}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      {totalGiftKgByEmail[key]?.toFixed(3) ?? "0.000"}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap space-x-2">
+                      <button
+                        onClick={() => handleResetCoins(u.email)}
+                        className="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                      >
+                        Reset
+                      </button>
+                      <button
+                        onClick={() => handleOpenGiftModal(u)}
+                        className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700"
+                      >
+                        Send Gift
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
-  {isGiftModalOpen && giftRecipient && (
-    <SendGiftModal
-      isOpen={isGiftModalOpen}
-      onClose={() => setIsGiftModalOpen(false)}
-      recipient={giftRecipient}
-      onGiftSent={handleGiftSent}
-    />
-  )}
-</section>
+        {isGiftModalOpen && giftRecipient && (
+          <SendGiftModal
+            isOpen={isGiftModalOpen}
+            onClose={() => setIsGiftModalOpen(false)}
+            recipient={giftRecipient}
+            onGiftSent={handleGiftSent}
+          />
+        )}
+      </section>
 
+      {/* --- Analytics Section --- */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bar: Detergent Earned */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-medium text-gray-800 mb-4">Detergent Earned (kg) per User</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="detergent" fill="#4F46E5" name="Detergent (kg)" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Line: Gifts Received */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-medium text-gray-800 mb-4">Gifts Received (kg) per User</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="gifts"
+                stroke="#059669"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                name="Gifts (kg)"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
 
         <section className="bg-white rounded-lg shadow-md p-6 mt-8">
   <h2 className="text-2xl font-bold text-gray-800 mb-6">Gifts Sent to Users</h2>
@@ -1188,45 +1293,119 @@ const aggregatedData = Object.keys(aggregatedCoins).map((email) => ({
 
 
         {/* Recent Transactions Section */}
-        <section className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-6 text-gray-800">Recent Transactions</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount (₹)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Products</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {recentTransactions.length > 0 ? (
-                  recentTransactions.map((txn, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap">{txn.transactionId}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{txn.fullName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{txn.phone}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">₹{txn.amount}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{new Date(txn.date).toLocaleString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {Array.isArray(txn.products)
-                          ? txn.products.join(", ")
-                          : txn.products}
-                      </td>
-                    </tr>
+<section className="space-y-4">
+  <h2 className="text-2xl font-bold text-gray-800">Recent Transactions</h2>
+
+  {/* Desktop: Table View */}
+<div className="hidden lg:block overflow-x-auto">
+  <table className="min-w-full table-fixed bg-white rounded-lg shadow-lg">
+    <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+      <tr>
+        <th className="w-2/12 px-4 py-3 text-left text-sm font-medium uppercase">Txn ID</th>
+        <th className="w-2/12 px-4 py-3 text-left text-sm font-medium uppercase">User</th>
+        <th className="w-2/12 px-4 py-3 text-left text-sm font-medium uppercase">Products</th>
+        {/* <th className="w-2/12 px-4 py-3 text-left text-sm font-medium uppercase">Amount (₹)</th>
+        <th className="w-2/12 px-4 py-3 text-left text-sm font-medium uppercase">Date</th>
+        <th className="w-2/12 px-4 py-3 text-left text-sm font-medium uppercase">Products</th> */}
+      </tr>
+    </thead>
+    <tbody className="divide-y divide-gray-200">
+      {recentTransactions.map((txn, i) => (
+        <tr
+          key={i}
+          className="even:bg-gray-50 hover:bg-gray-100 transition-colors"
+        >
+          <td className="px-4 py-4 font-mono text-indigo-700 text-sm whitespace-nowrap">
+            {txn.transactionId}
+          </td>
+          <td className="px-4 py-4 flex items-center text-sm whitespace-nowrap">
+            <FaUser className="mr-2 text-indigo-500" /> {txn.fullName}
+          </td>
+          <td className="px-4 py-4 flex items-center text-sm whitespace-nowrap">
+            <FaPhone className="mr-2 text-green-500" /> {txn.phone}
+          </td>
+          <td className="px-4 py-4 flex items-center text-sm font-semibold text-gray-800 whitespace-nowrap">
+            <FaRupeeSign className="mr-1" />
+            {txn.amount}
+          </td>
+          <td className="px-4 py-4 flex items-center text-sm text-gray-600 whitespace-nowrap">
+            <FaCalendarAlt className="mr-2" />
+            {new Date(txn.date).toLocaleString()}
+          </td>
+          <td className="px-4 py-4">
+            <div className="flex flex-wrap gap-1">
+              {Array.isArray(txn.products)
+                ? txn.products.map((p:any, idx:any) => (
+                    <span
+                      key={idx}
+                      className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full"
+                    >
+                      {p}
+                    </span>
                   ))
-                ) : (
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap" colSpan={6}>No recent transactions.</td>
-                  </tr>
+                : (
+                  <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
+                    {txn.products}
+                  </span>
                 )}
-              </tbody>
-            </table>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+
+  {/* Mobile: Card Grid */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
+    {recentTransactions.map((txn, i) => (
+      <div
+        key={i}
+        className="bg-white rounded-lg shadow p-4 flex flex-col space-y-2"
+      >
+        <div className="flex justify-between items-center">
+          <span className="font-mono text-indigo-700 text-sm">
+            {txn.transactionId}
+          </span>
+          <span className="text-xs text-gray-500">
+            {new Date(txn.date).toLocaleDateString()}
+          </span>
+        </div>
+        <p className="flex items-center text-sm">
+          <FaUser className="mr-2 text-indigo-500" /> {txn.fullName}
+        </p>
+        <p className="flex items-center text-sm">
+          <FaPhone className="mr-2 text-green-500" /> {txn.phone}
+        </p>
+        <p className="flex items-center text-sm font-semibold text-gray-800">
+          <FaRupeeSign className="mr-1" />
+          {txn.amount}
+        </p>
+        <div className="pt-2 border-t border-gray-200">
+          <h4 className="text-xs font-medium text-gray-600 mb-1">Products</h4>
+          <div className="flex flex-wrap gap-1">
+            {Array.isArray(txn.products)
+              ? txn.products.map((p:any, idx:any) => (
+                  <span
+                    key={idx}
+                    className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full"
+                  >
+                    {p}
+                  </span>
+                ))
+              : (
+                <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
+                  {txn.products}
+                </span>
+              )}
           </div>
-        </section>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+
 
         {/* Cancelled Orders Section */}
 <section className="bg-white rounded-lg shadow-md p-6 mt-8">
