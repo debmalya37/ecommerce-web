@@ -40,7 +40,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <SessionProvider>
           <Navbar />
-          <main className="flex-grow">{children}</main>
+          <main className="flex-grow pt-16">{children}</main>
         </SessionProvider>
         <Footer />
         
