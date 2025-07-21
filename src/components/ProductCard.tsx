@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
-interface ProductCardProps {
+interface Props {
   id: string;
   name: string;
   price: number;
@@ -11,70 +12,66 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({
-  id,
-  name,
-  price,
-  originalPrice,
-  imageUrl,
-  stock,
-}: ProductCardProps) {
-  const discountPercent = Math.round(((originalPrice - price) / originalPrice) * 100);
-  const discountLabel = discountPercent > 0 ? `Up to ${discountPercent}% off` : null;
+  id, name, price, originalPrice, imageUrl, stock
+}: Props) {
+  const discount = Math.round(((originalPrice - price) / originalPrice) * 100);
 
   return (
-    <>
-      <Link href={stock === 0 ? "#" : `/product/${id}`}>
-        <div className="bg-[#e4ecf5] text-white rounded-lg shadow-sm shadow-gray-800 p-4 flex flex-col relative transition-transform hover:-translate-y-1 hover:shadow-2xl hover:scale-[1.01] hover:shadow-gray-800 h-96">
-          {/* Top Row: Discount Badge */}
-          <div className="flex justify-between items-center mb-2">
-            {discountLabel && (
-              <span className="bg-blue-600 text-xs font-semibold px-2 py-1 rounded">
-                {discountLabel}
-              </span>
-            )}
-          </div>
+    <Link href={stock ? `/product/${id}` : "#"} className="group">
+      <motion.div
+        whileHover={{ scale: 1.03, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
+        className="flex flex-col bg-white rounded-2xl overflow-hidden shadow-lg h-full relative"
+      >
+        {/* Discount badge */}
+        {discount > 0 && (
+          <span className="
+            absolute top-3 left-3 px-3 py-1 text-xs font-bold rounded-full
+            bg-gradient-to-r from-purple-500 to-pink-500 text-white z-10
+          ">
+            -{discount}%
+          </span>
+        )}
 
-          {/* Product Image */}
-          <div className="relative w-full aspect-square bg-gray-200 rounded-md overflow-hidden flex items-center justify-center">
-            <img
-              src={imageUrl}
-              alt={name}
-              className="object-contain w-full h-full"
-              onError={(e) => (e.currentTarget.src = "/images/placeholder.jpg")}
-            />
-            {stock === 0 && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <span className="text-gray-900 font-bold">Out of Stock</span>
-              </div>
-            )}
-          </div>
+        {/* Image */}
+        <div className="relative w-full aspect-square bg-gray-100">
+          <img
+            src={imageUrl}
+            alt={name}
+            className="object-contain w-full h-full p-4"
+            onError={e => (e.currentTarget.src = "/images/placeholder.jpg")}
+          />
+          {!stock && (
+            <div className="
+              absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center
+            ">
+              <span className="text-white font-semibold">Out of Stock</span>
+            </div>
+          )}
+        </div>
 
-          {/* Product Title */}
-          <div className="mt-3 h-12 overflow-ellipsis">
-            <h2 className="font-bold text-sm sm:text-base md:text-lg line-clamp-2 text-gray-800">
-              {name}
-            </h2>
-          </div>
+        {/* Info */}
+        <div className="p-4 flex-1 flex flex-col">
+          <h2 className="
+            text-gray-900 font-semibold text-base line-clamp-2 mb-2
+            group-hover:text-purple-600 transition-colors
+          ">
+            {name}
+          </h2>
 
-          {/* Small Badges */}
-          <div className="flex items-center space-x-2 mt-2 text-[10px] sm:text-xs text-gray-300">
-            <span className="px-2 py-1 bg-gray-700 rounded">Best Seller</span>
-            <span className="px-2 py-1 bg-gray-700 rounded">Best Price</span>
-          </div>
-
-          {/* Price Section */}
-          <div className="mt-2">
-            <div className="flex items-baseline space-x-2">
+          <div className="mt-auto">
+            <div className="flex items-baseline gap-2">
               <span className="text-xl font-bold text-green-600">
                 ₹{price.toLocaleString()}
               </span>
-              <span className="text-sm line-through text-gray-600">
-                ₹{originalPrice.toLocaleString()}
-              </span>
+              {originalPrice > price && (
+                <span className="text-sm line-through text-gray-400">
+                  ₹{originalPrice.toLocaleString()}
+                </span>
+              )}
             </div>
           </div>
         </div>
-      </Link>
-    </>
+      </motion.div>
+    </Link>
   );
 }
