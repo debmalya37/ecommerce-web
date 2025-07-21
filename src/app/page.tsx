@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import Image from "next/image";
@@ -8,7 +8,11 @@ import heroImg from "../../public/images/hero.jpg";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { PiBroomLight } from "react-icons/pi";
+import { motion } from "framer-motion";
 import { LuStore } from "react-icons/lu";
+// import { LuStore } from "react-icons/lu";
+import * as FaIcons from "react-icons/fa";
+import * as GiIcons from "react-icons/gi";
 import {
   FaSoap,
   FaBath,
@@ -52,6 +56,7 @@ export default function HomePage() {
   const { data: session } = useSession();
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const router = useRouter();
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   const testimonials = [
     {
@@ -86,6 +91,12 @@ export default function HomePage() {
     },
   ];
 
+  const scroll = (offset: number) => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  };
+
   // Fetch categories from your API
   useEffect(() => {
     const fetchCategories = async () => {
@@ -117,7 +128,7 @@ export default function HomePage() {
 
   return (
     <>
-    <div className="bg-gradient-to-br from-gray-900 via-blue-950 to-purple-900 min-h-screen flex flex-col">
+    <div className="bg-white-50 min-h-screen flex flex-col">
       {/* Hero Section */}
       <header className="relative bg-blue-600 text-white sm:h-[50vh] md:h-[80vh]">
         <div className="relative h-full">
@@ -152,120 +163,111 @@ export default function HomePage() {
         </div>
       </header>
 
-       {/* Categories Section */}
-       <section className="py-8 bg-gradient-to-br from-blue-100 via-gray-100 to-purple-100">
-  <div className="container mx-auto px-4">
-    <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center font-serif">
-      Shop by Category
-    </h2>
-    <div className="relative">
-      {/* Left Arrow */}
-      <button
-        title="Previous"
-        className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-        onClick={() => {
-          document.getElementById("category-slider")?.scrollBy({ left: -200, behavior: "smooth" });
-        }}
-      >
-        <svg
-          className="w-6 h-6 text-gray-800"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-
-      {/* Slider Container */}
-      <div
-        id="category-slider"
-        className="flex space-x-4 overflow-x-auto scrollbar-hide px-10"
-      >
-        {categories.map((cat) => (
-          <Link key={cat._id} href={`/products?category=${encodeURIComponent(cat.name)}`}>
-            <span className="flex-shrink-0 block bg-[#ebeaec] rounded-lg shadow p-4 text-center hover:shadow-lg transition min-h-[100px] w-40 flex flex-col items-center justify-center border-2 border-cyan-500 hover:border-gray-200 font-sans">
-              {/* Icon display */}
-              {cat.icon ? (
-                iconMapping[cat.icon] ? (
-                  // Render static icon with stored color
-                  React.createElement(iconMapping[cat.icon], {
-                    className: "w-10 h-10",
-                    style: { color: cat.iconColor || "#fff" },
-                  })
-                ) : (
-                  // Fallback: render image if icon not in mapping
-                  <img
-                    src={cat.icon}
-                    alt={cat.name}
-                    className="w-32 h-28 object-contain"
-                  />
-                )
-              ) : (
-                <span className="w-10 h-10 flex items-center justify-center text-xl">
-                  <LuStore />
-                </span>
-              )}
-              <p className="mt-2 text-gray-950 font-semibold break-words max-w-full">
-                {cat.name}
-              </p>
-            </span>
-          </Link>
-        ))}
-      </div>
-
-      {/* Right Arrow */}
-      <button
-      title="Scroll Right"
-        className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-        onClick={() => {
-          document.getElementById("category-slider")?.scrollBy({ left: 200, behavior: "smooth" });
-        }}
-      >
-        <svg
-          className="w-6 h-6 text-gray-800"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-    </div>
-  </div>
-</section>
-
-
-            {/* Featured Products Section */}
-        <section className="py-12 bg-gradient-to-br from-purple-200 via-blue-200 to-purple-200">
-          <div className="container mx-auto px-6">
-            <h2 className="text-3xl font-bold text-gray-950 mb-6 text-center font-serif">
-              Featured Products
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              {featuredProducts.map((product: any) => (
-                <Link key={product._id} href={`/product/${product._id}`}>
-                  <span className="block bg-gray-50 p-4 rounded-lg shadow-md text-center hover:shadow-xl transition transform hover:scale-105">
-                    <div className="h-40 w-full bg-gray-200 mb-2 rounded-md overflow-hidden">
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        width={300}
-                        height={300}
-                        className="object-contain w-full h-full"
-                      />
+      {/* Categories */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-semibold mb-6 text-center">Shop by Category</h2>
+          <div className="relative">
+            {/* Left Arrow */}
+            <button
+              aria-label="Scroll Left"
+              onClick={() => scroll(-250)}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow hover:bg-gray-100"
+            >
+              <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            {/* Slider Container */}
+            <div
+              ref={sliderRef}
+              id="category-slider"
+              className="flex space-x-6 overflow-auto scrollbar-hide text-blue-950 snap-x snap-mandatory px-4 scrollbar-hide scroll-smooth"
+            >
+              {categories.map(cat => {
+                const Icon = iconMapping[cat.icon] || LuStore;
+                return (
+                  <Link
+                    key={cat._id}
+                    href={`/products?category=${encodeURIComponent(cat.name)}`}
+                    className="snap-start flex-shrink-0 w-48 bg-white rounded-2xl shadow-lg overflow-hidden transform hover:-translate-y-2 hover:shadow-2xl transition"
+                  >
+                    <div className="relative h-32 w-full">
+                      {cat.icon ? (
+                        <Image
+                          src={cat.icon}
+                          alt={cat.name}
+                          fill
+                          className="object-contain rounded-t-2xl"
+                        />
+                      ) : (
+                        <div className="bg-gray-200 h-full w-full" />
+                      )}
                     </div>
-                    <h3 className="font-bold text-gray-800 mb-2">{product.name}</h3>
-                    <p className="text-sm text-gray-600">Short description here</p>
-                    <p className="text-lg font-semibold text-blue-600 mt-2">
-                      ₹{product.price}
-                    </p>
-                  </span>
-                </Link>
-              ))}
+                    <div className="p-4 flex flex-col items-center">
+                      <div className="bg-gradient-to-br from-purple-400 to-blue-500 p-2 rounded-full mb-2 animate-float-icon">
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
+                      <p className="text-center font-medium text-gray-800">{cat.name}</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
+            {/* Right Arrow */}
+            <button
+              aria-label="Scroll Right"
+              onClick={() => scroll(250)}
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow hover:bg-gray-100"
+            >
+              <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
-        </section>
+        </div>
+      </section>
+      {/* Featured Products */}
+      <section className="py-16 bg-blue-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-semibold mb-10 text-center">Featured Products</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {featuredProducts.map(prod => (
+              <motion.div
+                key={prod._id}
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                className="bg-white rounded-2xl overflow-hidden shadow-lg relative group"
+              >
+                <Link href={`/product/${prod._id}`}>
+                  <div className="relative h-52 w-full overflow-hidden">
+                    <Image
+                      src={prod.images[0]}
+                      alt={prod.name}
+                      width={400}
+                      height={300}
+                    />
+                  </div>
+                  <div className="p-6 space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition">
+                      {prod.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 h-12 overflow-hidden">
+                      {prod.description || 'High-quality cleaning solution.'}
+                    </p>
+                    <div className="flex items-center justify-between mt-4">
+                      <span className="text-xl font-bold">₹{prod.price}</span>
+                      <button className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-blue-900 py-1 px-4 rounded-full text-sm shadow hover:brightness-105 transition">
+                        Buy
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
 
       {/* Why Choose Us Section */}
