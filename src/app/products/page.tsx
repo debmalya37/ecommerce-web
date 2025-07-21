@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { HiSearch } from "react-icons/hi";
@@ -9,7 +9,7 @@ import ProductCard from "@/components/ProductCard";
 import { useSearchParams } from "next/navigation";
 import Loader from "@/components/Loader";
 
-export default function ProductPage() {
+const ProductPageList = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -121,6 +121,16 @@ export default function ProductPage() {
           </motion.div>
         ))}
       </motion.div>
+    </div>
+  );
+}
+
+export default function ProductPage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-blue-100 to-purple-100">
+      <Suspense fallback={<div className="container mx-auto p-6"><Loader /></div>}>
+        <ProductPageList />
+      </Suspense>
     </div>
   );
 }
